@@ -1,0 +1,40 @@
+name: Docs or install issue
+description: Report unclear docs, scaffold problems, or install confusion.
+title: "[Docs/install]: "
+labels:
+  - documentation
+body:
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - Hermes
+        - Codex CLI
+        - Claude Code
+        - OpenCode
+        - Cursor
+        - Generic agent
+        - Repository docs
+    validations:
+      required: true
+  - type: textarea
+    id: confusion
+    attributes:
+      label: What was confusing or broken?
+    validations:
+      required: true
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What did you try?
+      description: Include commands and outputs if relevant.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private paths, chat identifiers, and private project data.
+          required: true

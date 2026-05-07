@@ -1,0 +1,51 @@
+name: Provider adapter request
+description: Request or document support for a provider, harness, plugin, or extension mechanism.
+title: "[Provider adapter]: "
+labels:
+  - provider-adapter
+body:
+  - type: input
+    id: target_tool
+    attributes:
+      label: Target tool
+      description: Name and version of the provider, harness, editor, or agent tool.
+    validations:
+      required: true
+  - type: textarea
+    id: mechanism
+    attributes:
+      label: Plugin or extension mechanism
+      description: Describe the native mechanism, manifest format, install directory, or manual instruction path.
+    validations:
+      required: true
+  - type: textarea
+    id: manual_attempt
+    attributes:
+      label: Manual install attempt
+      description: What did you try with the current file-based scaffold?
+    validations:
+      required: true
+  - type: textarea
+    id: validation_evidence
+    attributes:
+      label: Validation evidence
+      description: Include commands, transcripts, screenshots, or a minimal fixture showing the adapter works.
+    validations:
+      required: true
+  - type: dropdown
+    id: requested_status
+    attributes:
+      label: Requested status label
+      options:
+        - experimental
+        - tested
+        - planned
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private paths, chat identifiers, and private project data.
+          required: true

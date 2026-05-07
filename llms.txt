@@ -1,0 +1,21 @@
+# basd-coding-dispatch
+
+Purpose: provider-neutral, subagent-driven coding workflow for plan-first AI coding agents.
+
+Primary files:
+- README.md
+- skills/basd-coding-dispatch/SKILL.md
+- references/quality-gates.md
+- references/provider-command-recipes.md
+- references/session-topology.md
+- references/review-orchestration.md
+- references/subagent-skill-bundles.md
+- integrations/*/install.md
+- examples/*.md
+
+Rules for agents:
+- Classify the task before provider selection.
+- Use spec and implementation-plan gates for non-trivial work.
+- Keep provider mechanics outside the portable skill.
+- Verify before completion.
+- Do not include private data, credentials, or unvalidated native metadata.

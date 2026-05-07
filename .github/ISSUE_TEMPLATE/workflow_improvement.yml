@@ -1,0 +1,40 @@
+name: Workflow improvement
+description: Suggest a gate, review, verification, or dispatch-process improvement.
+title: "[Workflow]: "
+labels:
+  - workflow
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What failure mode does this improvement prevent?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the process change and where it belongs.
+    validations:
+      required: true
+  - type: dropdown
+    id: location
+    attributes:
+      label: Best location
+      options:
+        - Core skill
+        - References
+        - Integration docs
+        - Examples
+        - CLI or validation
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or example
+      description: Add a short transcript, example, or failure case.
+    validations:
+      required: false

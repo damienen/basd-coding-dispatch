@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">basd-coding-dispatch logo</title>
+  <desc id="desc">A simple dispatch mark with connected plan gates.</desc>
+  <rect width="512" height="512" rx="72" fill="#111827"/>
+  <path d="M112 132h288v52H112z" fill="#F8FAFC"/>
+  <path d="M112 230h132v52H112z" fill="#38BDF8"/>
+  <path d="M268 230h132v52H268z" fill="#FBBF24"/>
+  <path d="M112 328h288v52H112z" fill="#34D399"/>
+  <path d="M244 184h24v46h-24zM244 282h24v46h-24z" fill="#F8FAFC"/>
+  <path d="M230 142l26-22 26 22-26 22z" fill="#34D399"/>
+</svg>

@@ -1,0 +1,54 @@
+{
+  "name": "basd-coding-dispatch",
+  "version": "0.1.0",
+  "description": "Provider-neutral, subagent-driven coding workflow for plan-first AI coding agents.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/damienen/basd-coding-dispatch.git"
+  },
+  "homepage": "https://github.com/damienen/basd-coding-dispatch#readme",
+  "bugs": {
+    "url": "https://github.com/damienen/basd-coding-dispatch/issues"
+  },
+  "type": "module",
+  "bin": {
+    "basd-coding-dispatch": "./bin/basd-coding-dispatch.mjs"
+  },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "smoke-test": "node scripts/smoke-test.mjs"
+  },
+  "files": [
+    ".github",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "SECURITY.md",
+    "assets",
+    "bin",
+    "examples",
+    "integrations",
+    "llms.txt",
+    "references",
+    "scripts",
+    "skills"
+  ],
+  "keywords": [
+    "ai-coding",
+    "agents",
+    "codex",
+    "claude",
+    "workflow",
+    "subagents"
+  ],
+  "author": "Basd",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  }
+}

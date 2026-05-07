@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a workflow, provider, harness, integration, or user-config bug.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: cause_area
+    attributes:
+      label: Where does the issue appear to come from?
+      options:
+        - Workflow/process
+        - Provider behavior
+        - Harness or integration
+        - User configuration
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include commands, target provider, and relevant file paths.
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Paste logs, transcripts, screenshots, or minimal examples. Remove private data first.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private paths, chat identifiers, and private project data.
+          required: true
