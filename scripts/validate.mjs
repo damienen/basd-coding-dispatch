@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const defaultRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let repoRoot = defaultRepoRoot;
 let errors = [];
+const companionManifestFile = "integrations/companion-skills.json";
 
 const requiredFiles = [
   "README.md",
@@ -24,6 +25,7 @@ const requiredFiles = [
   "bin/basd-coding-dispatch.mjs",
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
+  companionManifestFile,
   "skills/basd-coding-dispatch/SKILL.md",
   "skills/basd-coding-dispatch/references/README.md",
   "skills/basd-coding-dispatch/references/quality-gates.md",
@@ -130,6 +132,24 @@ const skillReferenceFiles = [
   "subagent-skill-bundles.md"
 ];
 
+const expectedCompanionSkills = [
+  "codex",
+  "claude-code",
+  "using-superpowers",
+  "brainstorming",
+  "writing-plans",
+  "subagent-driven-development",
+  "requesting-code-review",
+  "verification-before-completion",
+  "test-driven-development",
+  "systematic-debugging"
+];
+
+const verifiedCompanionRefs = {
+  "NousResearch/hermes-agent": "faa13e49f81480771ceeb55991bb0c27edf1a5fb",
+  "obra/superpowers": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7"
+};
+
 function addError(message) {
   errors.push(message);
 }
@@ -137,6 +157,19 @@ function addError(message) {
 async function readJson(relativePath) {
   const content = await readFile(path.join(repoRoot, relativePath), "utf8");
   return JSON.parse(content);
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isSafeRelativePath(value) {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    !path.isAbsolute(value) &&
+    !value.split(/[\\/]+/).includes("..")
+  );
 }
 
 async function listFiles(directory) {
@@ -275,6 +308,146 @@ async function validateSkillReferences() {
   }
 }
 
+async function validateCompanionManifest() {
+  let manifest;
+  try {
+    manifest = await readJson(companionManifestFile);
+  } catch (error) {
+    addError(`${companionManifestFile} could not be parsed: ${error.message}`);
+    return;
+  }
+
+  if (!isPlainObject(manifest)) {
+    addError(`${companionManifestFile} must contain a JSON object`);
+    return;
+  }
+
+  if (manifest.schemaVersion !== 1) {
+    addError(`${companionManifestFile} schemaVersion must be 1`);
+  }
+
+  if (!Array.isArray(manifest.skills) || manifest.skills.length === 0) {
+    addError(`${companionManifestFile} must include a non-empty skills array`);
+    return;
+  }
+
+  const seenNames = new Set();
+  const defaultSkills = [];
+
+  for (const [index, skill] of manifest.skills.entries()) {
+    const label = `${companionManifestFile} skills[${index}]`;
+
+    if (!isPlainObject(skill)) {
+      addError(`${label} must be an object`);
+      continue;
+    }
+
+    for (const field of [
+      "name",
+      "sourceRepo",
+      "ref",
+      "sourceDirectory",
+      "license",
+      "licenseNotes",
+      "updateNotes"
+    ]) {
+      if (typeof skill[field] !== "string" || skill[field].length === 0) {
+        addError(`${label}.${field} must be a non-empty string`);
+      }
+    }
+
+    if (typeof skill.installByDefault !== "boolean") {
+      addError(`${label}.installByDefault must be a boolean`);
+    }
+
+    if (typeof skill.name === "string") {
+      if (seenNames.has(skill.name)) {
+        addError(`${label}.name duplicates ${skill.name}`);
+      }
+      seenNames.add(skill.name);
+
+      if (skill.installByDefault === true) {
+        defaultSkills.push(skill.name);
+      }
+    }
+
+    if (!isSafeRelativePath(skill.sourceDirectory)) {
+      addError(`${label}.sourceDirectory must be a safe relative path`);
+    }
+
+    if (!/^[a-f0-9]{40}$/i.test(skill.ref ?? "")) {
+      addError(`${label}.ref must be a 40-character commit hash`);
+    }
+
+    if (!Object.hasOwn(verifiedCompanionRefs, skill.sourceRepo)) {
+      addError(`${label}.sourceRepo is not one of the approved upstream repositories`);
+    } else if (verifiedCompanionRefs[skill.sourceRepo] !== skill.ref) {
+      addError(`${label}.ref must match the verified ref for ${skill.sourceRepo}`);
+    }
+
+    if (!Array.isArray(skill.files) || skill.files.length === 0) {
+      addError(`${label}.files must be a non-empty array`);
+      continue;
+    }
+
+    let hasSkillFile = false;
+    for (const [fileIndex, file] of skill.files.entries()) {
+      const fileLabel = `${label}.files[${fileIndex}]`;
+
+      if (!isPlainObject(file)) {
+        addError(`${fileLabel} must be an object`);
+        continue;
+      }
+
+      for (const field of ["sourcePath", "destinationPath", "rawUrl"]) {
+        if (typeof file[field] !== "string" || file[field].length === 0) {
+          addError(`${fileLabel}.${field} must be a non-empty string`);
+        }
+      }
+
+      if (!isSafeRelativePath(file.sourcePath)) {
+        addError(`${fileLabel}.sourcePath must be a safe relative path`);
+      }
+
+      if (!isSafeRelativePath(file.destinationPath)) {
+        addError(`${fileLabel}.destinationPath must be a safe relative path`);
+      }
+
+      if (
+        typeof file.sourcePath === "string" &&
+        typeof skill.sourceDirectory === "string" &&
+        !file.sourcePath.startsWith(`${skill.sourceDirectory}/`)
+      ) {
+        addError(`${fileLabel}.sourcePath must live under ${skill.sourceDirectory}`);
+      }
+
+      const expectedRawUrl =
+        `https://raw.githubusercontent.com/${skill.sourceRepo}/${skill.ref}/${file.sourcePath}`;
+      if (file.rawUrl !== expectedRawUrl) {
+        addError(`${fileLabel}.rawUrl must equal ${expectedRawUrl}`);
+      }
+
+      if (file.destinationPath === "SKILL.md") {
+        hasSkillFile = true;
+      }
+    }
+
+    if (!hasSkillFile) {
+      addError(`${label}.files must install SKILL.md`);
+    }
+  }
+
+  for (const skillName of expectedCompanionSkills) {
+    if (!seenNames.has(skillName)) {
+      addError(`${companionManifestFile} is missing companion skill ${skillName}`);
+    }
+
+    if (!defaultSkills.includes(skillName)) {
+      addError(`${companionManifestFile} must install ${skillName} by default`);
+    }
+  }
+}
+
 async function validateLeakageScan() {
   const files = await listFiles(repoRoot);
 
@@ -319,6 +492,20 @@ async function validateIntegrationStatuses() {
     if (!/^Status:\s*(tested|experimental|planned)$/m.test(content)) {
       addError(`${file} must include a status label of tested, experimental, or planned`);
     }
+
+    if (
+      ["integrations/hermes/install.md", "integrations/openclaw/install.md"].includes(file) &&
+      (
+        !content.includes("companion skills") ||
+        !content.includes("raw.githubusercontent.com") ||
+        !content.includes("--skip-companion-skills") ||
+        !content.includes("--no-companion-skills")
+      )
+    ) {
+      addError(
+        `${file} must document companion skills, raw.githubusercontent.com network access, and skip flags`
+      );
+    }
   }
 }
 
@@ -341,6 +528,13 @@ async function validateReadme() {
 
   for (const requiredText of [
     "npx basd-coding-dispatch init",
+    "Prerequisites",
+    "What gets installed",
+    "What this does not install/configure",
+    "companion skills",
+    "raw.githubusercontent.com",
+    "--skip-companion-skills",
+    "--no-companion-skills",
     "Telegram",
     "mobile",
     "worker-routing",
@@ -356,6 +550,101 @@ async function validateReadme() {
   }
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractWorkflowStep(content, stepName) {
+  const lines = content.split("\n");
+  const stepStartPattern = new RegExp(`^(\\s*)-\\s+name:\\s+${escapeRegExp(stepName)}\\s*$`);
+  const startIndex = lines.findIndex((line) => stepStartPattern.test(line));
+
+  if (startIndex === -1) {
+    return "";
+  }
+
+  const stepIndent = lines[startIndex].match(stepStartPattern)?.[1] ?? "";
+  let endIndex = lines.length;
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (lines[index].startsWith(`${stepIndent}- name:`)) {
+      endIndex = index;
+      break;
+    }
+  }
+
+  return lines.slice(startIndex, endIndex).join("\n");
+}
+
+async function validateReleaseWorkflow() {
+  const content = await readFile(path.join(repoRoot, ".github/workflows/release.yml"), "utf8");
+
+  for (const requiredText of [
+    "workflow_dispatch:",
+    "id-token: write",
+    "Check tag matches package version",
+    "github.event_name == 'push'",
+    "GITHUB_REF_NAME",
+    "workflow_dispatch runs validation, smoke test, and pack dry run only",
+    "npm publish --access public --provenance"
+  ]) {
+    if (!content.includes(requiredText)) {
+      addError(`.github/workflows/release.yml must include ${requiredText}`);
+    }
+  }
+
+  if (/^\s*NPM_TOKEN\s*:/m.test(content)) {
+    addError(".github/workflows/release.yml must not define NPM_TOKEN as a workflow environment key");
+  }
+
+  if (content.includes("env.NPM_TOKEN")) {
+    addError(".github/workflows/release.yml must not gate publish behavior on env.NPM_TOKEN");
+  }
+
+  const publishStep = extractWorkflowStep(content, "Publish to npm");
+  if (!publishStep) {
+    addError(".github/workflows/release.yml must include a Publish to npm step");
+  } else {
+    for (const requiredText of [
+      "if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')",
+      "NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}",
+      "npm publish --access public --provenance"
+    ]) {
+      if (!publishStep.includes(requiredText)) {
+        addError(`.github/workflows/release.yml Publish to npm step must include ${requiredText}`);
+      }
+    }
+
+    const workflowOutsidePublishStep = content.replace(publishStep, "");
+    if (/NODE_AUTH_TOKEN|secrets\.NPM_TOKEN/.test(workflowOutsidePublishStep)) {
+      addError(
+        ".github/workflows/release.yml must expose the npm secret only as NODE_AUTH_TOKEN in the Publish to npm step"
+      );
+    }
+  }
+
+  for (const stepName of ["Install", "Validate", "Smoke test", "Pack dry run"]) {
+    const step = extractWorkflowStep(content, stepName);
+    if (!step) {
+      addError(`.github/workflows/release.yml must include a ${stepName} step`);
+    } else if (/^\s+if:\s*/m.test(step)) {
+      addError(`.github/workflows/release.yml ${stepName} step must run for workflow_dispatch`);
+    }
+  }
+
+  const manualSkipStep = extractWorkflowStep(content, "Skip publish for manual run");
+  if (!manualSkipStep) {
+    addError(".github/workflows/release.yml must include a Skip publish for manual run step");
+  } else if (
+    !manualSkipStep.includes("if: github.event_name == 'workflow_dispatch'") ||
+    !manualSkipStep.includes(
+      "workflow_dispatch runs validation, smoke test, and pack dry run only; skipping npm publish."
+    )
+  ) {
+    addError(".github/workflows/release.yml manual skip step must clearly skip npm publish");
+  }
+}
+
 export async function runValidation(options = {}) {
   repoRoot = path.resolve(options.rootDir ?? defaultRepoRoot);
   errors = [];
@@ -364,11 +653,13 @@ export async function runValidation(options = {}) {
   await validatePackageJson();
   await validateSkillFrontmatter();
   await validateSkillReferences();
+  await validateCompanionManifest();
   await validateLeakageScan();
   await validateExampleReferences();
   await validateIntegrationStatuses();
   validateForbiddenPublicFiles();
   await validateReadme();
+  await validateReleaseWorkflow();
 
   const stdout = options.stdout ?? process.stdout;
   const stderr = options.stderr ?? process.stderr;

@@ -23,6 +23,7 @@ const skillFiles = [
   ...skillReferenceFiles.map((file) => `${skillDirectory}/references/${file}`)
 ];
 const rootReferenceFiles = skillReferenceFiles.map((file) => `references/${file}`);
+const companionManifestFile = "integrations/companion-skills.json";
 
 const TARGETS = [
   "hermes",
@@ -51,6 +52,7 @@ const REQUIRED_SOURCE_FILES = [
   "bin/basd-coding-dispatch.mjs",
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
+  companionManifestFile,
   ...skillFiles,
   ...rootReferenceFiles,
   "integrations/hermes/install.md",
@@ -117,7 +119,7 @@ function printHelp(stream = process.stdout) {
   stream.write(`basd-coding-dispatch
 
 Usage:
-  basd-coding-dispatch init [--target <target>] [--dir <path>] [--force]
+  basd-coding-dispatch init [--target <target>] [--dir <path>] [--force] [--skip-companion-skills]
   basd-coding-dispatch doctor
   basd-coding-dispatch validate
   basd-coding-dispatch help
@@ -133,10 +135,15 @@ Targets:
 
 Examples:
   basd-coding-dispatch init
+  basd-coding-dispatch init --skip-companion-skills
   basd-coding-dispatch init --dir ~/.hermes
   basd-coding-dispatch init --target openclaw --dir ~/openclaw-workspace
   basd-coding-dispatch init --target generic-agent --dir ./my-project
   basd-coding-dispatch doctor
+
+Options:
+  --skip-companion-skills  Do not fetch default companion skills for native targets
+  --no-companion-skills    Alias for --skip-companion-skills
 `);
 }
 
@@ -145,7 +152,8 @@ function parseInitArgs(args) {
     target: DEFAULT_TARGET,
     dir: undefined,
     dirProvided: false,
-    force: false
+    force: false,
+    installCompanionSkills: true
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -168,6 +176,8 @@ function parseInitArgs(args) {
       index += 1;
     } else if (arg === "--force") {
       options.force = true;
+    } else if (arg === "--skip-companion-skills" || arg === "--no-companion-skills") {
+      options.installCompanionSkills = false;
     } else if (arg === "--help" || arg === "-h") {
       options.help = true;
     } else {
@@ -218,6 +228,15 @@ async function listSourceFiles(relativeDirectory) {
   return files.sort();
 }
 
+async function loadCompanionSkillManifest() {
+  const content = await readFile(path.join(packageRoot, companionManifestFile), "utf8");
+  return JSON.parse(content);
+}
+
+function defaultCompanionSkills(manifest) {
+  return (manifest.skills ?? []).filter((skill) => skill.installByDefault === true);
+}
+
 function formatFile(file) {
   return file.split(path.sep).join("/");
 }
@@ -236,6 +255,16 @@ function expandHomePath(value) {
 
 function resolveUserPath(value) {
   return path.resolve(process.cwd(), expandHomePath(value));
+}
+
+function assertSafeRelativePath(value, label) {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${label} must be a non-empty relative path`);
+  }
+
+  if (path.isAbsolute(value) || value.split(/[\\/]+/).includes("..")) {
+    throw new Error(`${label} must stay inside the install root: ${value}`);
+  }
 }
 
 function resolveNativeRoot(target, options = {}) {
@@ -265,6 +294,104 @@ function printNativeNextStep(target) {
 
   process.stdout.write("next: openclaw skills list\n");
   process.stdout.write("next: /skill basd-coding-dispatch\n");
+}
+
+function companionOutputFile(skill, file) {
+  assertSafeRelativePath(skill.name, "companion skill name");
+  assertSafeRelativePath(file.destinationPath, "companion destinationPath");
+  return formatFile(path.join("skills", skill.name, file.destinationPath));
+}
+
+function companionFixturePath(skill, file) {
+  assertSafeRelativePath(file.sourcePath, "companion sourcePath");
+  const fixtureRoot = resolveUserPath(process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR);
+  return path.join(fixtureRoot, skill.sourceRepo, file.sourcePath);
+}
+
+async function fetchCompanionFile(skill, file) {
+  if (process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR) {
+    return readFile(companionFixturePath(skill, file), "utf8");
+  }
+
+  if (typeof fetch !== "function") {
+    throw new Error("global fetch is unavailable; Node 22 or newer is required");
+  }
+
+  const response = await fetch(file.rawUrl);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`.trim());
+  }
+
+  return response.text();
+}
+
+async function prepareCompanionSkillInstall(root, options) {
+  const manifest = await loadCompanionSkillManifest();
+  const skills = defaultCompanionSkills(manifest);
+  const result = {
+    created: [],
+    completed: [],
+    skipped: [],
+    overwritten: [],
+    writePlans: []
+  };
+
+  for (const skill of skills) {
+    const plannedFiles = skill.files.map((file) => {
+      const outputFile = companionOutputFile(skill, file);
+
+      return {
+        sourcePath: file.sourcePath,
+        outputFile,
+        destinationPath: path.join(root, outputFile),
+        rawUrl: file.rawUrl
+      };
+    });
+    const existingFiles = plannedFiles.filter((file) => existsSync(file.destinationPath));
+    const missingFiles = plannedFiles.filter((file) => !existsSync(file.destinationPath));
+
+    if (!options.force && missingFiles.length === 0) {
+      result.skipped.push(skill.name);
+      continue;
+    }
+
+    const filesToInstall = options.force ? plannedFiles : missingFiles;
+    const filesWithContent = [];
+    for (const file of filesToInstall) {
+      try {
+        const content = await fetchCompanionFile(skill, file);
+        filesWithContent.push({ ...file, content });
+      } catch (error) {
+        throw new Error(
+          `failed to fetch companion skill ${skill.name} file ${file.sourcePath} from ${file.rawUrl}: ${error.message}`
+        );
+      }
+    }
+
+    result.writePlans.push({
+      skillName: skill.name,
+      files: filesWithContent
+    });
+
+    if (options.force && existingFiles.length > 0) {
+      result.overwritten.push(skill.name);
+    } else if (!options.force && existingFiles.length > 0) {
+      result.completed.push(skill.name);
+    } else {
+      result.created.push(skill.name);
+    }
+  }
+
+  return result;
+}
+
+async function writeCompanionSkillInstall(plan) {
+  for (const skillPlan of plan.writePlans) {
+    for (const file of skillPlan.files) {
+      await mkdir(path.dirname(file.destinationPath), { recursive: true });
+      await writeFile(file.destinationPath, file.content, "utf8");
+    }
+  }
 }
 
 async function initNativeSkill(options) {
@@ -298,6 +425,26 @@ async function initNativeSkill(options) {
     return 1;
   }
 
+  let companionPlan;
+  if (options.installCompanionSkills) {
+    try {
+      companionPlan = await prepareCompanionSkillInstall(root, options);
+    } catch (error) {
+      process.stdout.write(`target: ${options.target}\n`);
+      process.stdout.write(`root: ${root}\n`);
+      process.stdout.write(`dir: ${installDir}\n`);
+      printFileList("created", []);
+      printFileList("skipped", []);
+      printFileList("refused", []);
+      printFileList("companion created", []);
+      printFileList("companion completed", []);
+      printFileList("companion skipped", []);
+      printFileList("companion overwritten", []);
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
   const createdFiles = [];
   for (const file of plannedFiles) {
     const content = await readFile(path.join(packageRoot, file.sourceFile), "utf8");
@@ -306,12 +453,24 @@ async function initNativeSkill(options) {
     createdFiles.push(file.outputFile);
   }
 
+  if (companionPlan) {
+    await writeCompanionSkillInstall(companionPlan);
+  }
+
   process.stdout.write(`target: ${options.target}\n`);
   process.stdout.write(`root: ${root}\n`);
   process.stdout.write(`dir: ${installDir}\n`);
   printFileList("created", createdFiles);
   printFileList("skipped", []);
   printFileList("refused", []);
+  if (options.installCompanionSkills) {
+    printFileList("companion created", companionPlan.created);
+    printFileList("companion completed", companionPlan.completed);
+    printFileList("companion skipped", companionPlan.skipped);
+    printFileList("companion overwritten", companionPlan.overwritten);
+  } else {
+    process.stdout.write("companion skills: skipped by flag\n");
+  }
   printNativeNextStep(options.target);
 
   return 0;
@@ -480,6 +639,16 @@ function printInstallStatus(label, root, skillPath, rootLabel = "root") {
   );
 }
 
+function printCompanionInstallStatus(label, root, skills) {
+  process.stdout.write(`${label} companion skills:\n`);
+  for (const skill of skills) {
+    const skillPath = path.join(root, "skills", skill.name, "SKILL.md");
+    process.stdout.write(
+      `  ${skill.name}: ${existsSync(skillPath) ? "installed" : "missing"} at ${skillPath}\n`
+    );
+  }
+}
+
 async function doctor() {
   const validationErrors = [];
   const validationStatus = await runValidation({
@@ -518,9 +687,14 @@ async function doctor() {
     return 1;
   }
 
+  const companionManifest = await loadCompanionSkillManifest();
+  const companionSkills = defaultCompanionSkills(companionManifest);
   const hermesRoot = resolveNativeRoot("hermes", { dirProvided: false });
   const openclawRoot = resolveNativeRoot("openclaw", { dirProvided: false });
 
+  process.stdout.write(
+    `companion manifest: ok (${companionSkills.length} default skills at ${companionManifestFile})\n`
+  );
   process.stdout.write(`hermes cli: ${commandStatus("hermes", ["--version"])}\n`);
   printInstallStatus(
     "hermes",
@@ -528,6 +702,7 @@ async function doctor() {
     path.join(hermesRoot, "skills", "basd-coding-dispatch", "SKILL.md"),
     "home"
   );
+  printCompanionInstallStatus("hermes", hermesRoot, companionSkills);
   process.stdout.write(`openclaw cli: ${commandStatus("openclaw", ["--version"], { nodeFallback: true })}\n`);
   process.stdout.write(`openclaw workspace: ${openclawRoot}\n`);
   process.stdout.write(
@@ -537,6 +712,7 @@ async function doctor() {
         : "missing"
     } at ${path.join(openclawRoot, "skills", "basd-coding-dispatch", "SKILL.md")}\n`
   );
+  printCompanionInstallStatus("openclaw", openclawRoot, companionSkills);
   process.stdout.write("Doctor passed\n");
   return 0;
 }

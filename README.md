@@ -26,6 +26,12 @@ Telegram / mobile request
 
 ![basd-coding-dispatch workflow](assets/flow-diagram.svg)
 
+## Prerequisites
+
+- Hermes or OpenClaw is already installed and authenticated for the runtime you plan to use.
+- Codex CLI and Claude Code are already installed and authenticated if you want Hermes/OpenClaw to route worker tasks to those backends.
+- Node.js 22 or newer is available for `npx basd-coding-dispatch`.
+
 ## Quickstart
 
 Install the full Hermes skill directory (default target):
@@ -46,6 +52,13 @@ Install for OpenClaw workspace skills:
 npx basd-coding-dispatch init --target openclaw --dir ~/openclaw-workspace
 ```
 
+Skip default companion skills:
+
+```bash
+npx basd-coding-dispatch init --skip-companion-skills
+npx basd-coding-dispatch init --target openclaw --no-companion-skills
+```
+
 Create the manual project scaffold for a generic agent:
 
 ```bash
@@ -59,7 +72,19 @@ npx basd-coding-dispatch doctor
 npx basd-coding-dispatch validate
 ```
 
-Hermes and OpenClaw targets install `skills/basd-coding-dispatch/` as a self-contained skill, including `SKILL.md` and skill-local `references/`. They refuse to overwrite existing skill files unless `--force` is provided. Manual adapter targets write process docs and skill/reference files into a project; they never write credentials or unvalidated native marketplace metadata.
+## What gets installed
+
+Hermes and OpenClaw targets install `skills/basd-coding-dispatch/` as a self-contained skill, including `SKILL.md` and skill-local `references/`. By default, they also install pinned companion skills from `integrations/companion-skills.json` when those skills are missing: Hermes Codex/Claude Code worker guides plus the Superpowers process skills used for planning, review, TDD, debugging, and verification. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
+
+Existing companion skills are skipped unless `--force` is provided. Existing core `basd-coding-dispatch` files still block the install unless `--force` is provided. Use `--skip-companion-skills` or `--no-companion-skills` for the offline/core-only path.
+
+Manual adapter targets write process docs and skill/reference files into a project. They do not fetch or install companion skills.
+
+## What this does not install/configure
+
+This package does not install Hermes, OpenClaw, Codex CLI, Claude Code, auth tokens, API keys, model credentials, Telegram gateways, or native marketplace/plugin metadata. It assumes those runtimes and credentials already exist.
+
+For OpenClaw, `--dir <path>` writes to that workspace root under `<path>/skills/`. Runtime discovery still depends on the workspace that your OpenClaw process is actually using; verify with `openclaw skills list` and `openclaw skills info basd-coding-dispatch`.
 
 ## Adaptation Status
 

@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "description": "Pinned upstream companion skills installed by default for native Hermes and OpenClaw targets.",
+  "skills": [
+    {
+      "name": "codex",
+      "sourceRepo": "NousResearch/hermes-agent",
+      "ref": "faa13e49f81480771ceeb55991bb0c27edf1a5fb",
+      "sourceDirectory": "skills/autonomous-ai-agents/codex",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository and skill frontmatter declare MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/autonomous-ai-agents/codex/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/NousResearch/hermes-agent/faa13e49f81480771ceeb55991bb0c27edf1a5fb/skills/autonomous-ai-agents/codex/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "claude-code",
+      "sourceRepo": "NousResearch/hermes-agent",
+      "ref": "faa13e49f81480771ceeb55991bb0c27edf1a5fb",
+      "sourceDirectory": "skills/autonomous-ai-agents/claude-code",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository and skill frontmatter declare MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/autonomous-ai-agents/claude-code/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/NousResearch/hermes-agent/faa13e49f81480771ceeb55991bb0c27edf1a5fb/skills/autonomous-ai-agents/claude-code/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "using-superpowers",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/using-superpowers",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/using-superpowers/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-superpowers/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "brainstorming",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/brainstorming",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/brainstorming/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "writing-plans",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/writing-plans",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/writing-plans/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-plans/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "subagent-driven-development",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/subagent-driven-development",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/subagent-driven-development/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/subagent-driven-development/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/subagent-driven-development/implementer-prompt.md",
+          "destinationPath": "implementer-prompt.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/subagent-driven-development/implementer-prompt.md"
+        },
+        {
+          "sourcePath": "skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "destinationPath": "spec-reviewer-prompt.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/subagent-driven-development/spec-reviewer-prompt.md"
+        },
+        {
+          "sourcePath": "skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "destinationPath": "code-quality-reviewer-prompt.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/subagent-driven-development/code-quality-reviewer-prompt.md"
+        }
+      ]
+    },
+    {
+      "name": "requesting-code-review",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/requesting-code-review",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/requesting-code-review/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/requesting-code-review/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "verification-before-completion",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/verification-before-completion",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/verification-before-completion/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/verification-before-completion/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "test-driven-development",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/test-driven-development",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/test-driven-development/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/test-driven-development/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "systematic-debugging",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/systematic-debugging",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/systematic-debugging/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/SKILL.md"
+        }
+      ]
+    }
+  ]
+}

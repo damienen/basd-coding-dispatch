@@ -10,6 +10,7 @@ body:
       label: Target
       options:
         - Hermes
+        - OpenClaw
         - Codex CLI
         - Claude Code
         - OpenCode
@@ -31,6 +32,16 @@ body:
       description: Include commands and outputs if relevant.
     validations:
       required: true
+  - type: input
+    id: install_command
+    attributes:
+      label: Install command
+      description: Example: npx basd-coding-dispatch init --target openclaw --dir ~/openclaw-workspace
+  - type: input
+    id: install_target_path
+    attributes:
+      label: Target/path
+      description: Include the target and destination path, with private home/project names redacted if needed.
   - type: checkboxes
     id: safety
     attributes:

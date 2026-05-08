@@ -11,6 +11,7 @@ import { main } from "../bin/basd-coding-dispatch.mjs";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(packageRoot, "bin", "basd-coding-dispatch.mjs");
+const companionManifestPath = path.join(packageRoot, "integrations", "companion-skills.json");
 
 const manualAdapterTargets = [
   "codex",
@@ -26,6 +27,57 @@ const skillReferenceFiles = [
   "session-topology.md",
   "review-orchestration.md",
   "subagent-skill-bundles.md"
+];
+
+const companionSkillNames = [
+  "codex",
+  "claude-code",
+  "using-superpowers",
+  "brainstorming",
+  "writing-plans",
+  "subagent-driven-development",
+  "requesting-code-review",
+  "verification-before-completion",
+  "test-driven-development",
+  "systematic-debugging"
+];
+
+const subagentDrivenDevelopmentPromptFiles = [
+  "implementer-prompt.md",
+  "spec-reviewer-prompt.md",
+  "code-quality-reviewer-prompt.md"
+];
+
+const fixtureFiles = [
+  {
+    repo: "NousResearch/hermes-agent",
+    path: "skills/autonomous-ai-agents/codex/SKILL.md",
+    content: "---\nname: codex\n---\n# Codex fixture\n"
+  },
+  {
+    repo: "NousResearch/hermes-agent",
+    path: "skills/autonomous-ai-agents/claude-code/SKILL.md",
+    content: "---\nname: claude-code\n---\n# Claude Code fixture\n"
+  },
+  ...[
+    "using-superpowers",
+    "brainstorming",
+    "writing-plans",
+    "subagent-driven-development",
+    "requesting-code-review",
+    "verification-before-completion",
+    "test-driven-development",
+    "systematic-debugging"
+  ].map((name) => ({
+    repo: "obra/superpowers",
+    path: `skills/${name}/SKILL.md`,
+    content: `---\nname: ${name}\n---\n# ${name} fixture\n`
+  })),
+  ...subagentDrivenDevelopmentPromptFiles.map((file) => ({
+    repo: "obra/superpowers",
+    path: `skills/subagent-driven-development/${file}`,
+    content: `# ${file} fixture\n`
+  }))
 ];
 
 function captureWrite(chunks) {
@@ -97,6 +149,46 @@ function assertInstalledSkill(root, label) {
   }
 }
 
+function assertInstalledCompanionSkills(root, label) {
+  for (const skillName of companionSkillNames) {
+    assert.ok(
+      existsSync(path.join(root, "skills", skillName, "SKILL.md")),
+      `companion skill ${skillName} missing for ${label}`
+    );
+  }
+
+  for (const file of subagentDrivenDevelopmentPromptFiles) {
+    assert.ok(
+      existsSync(path.join(root, "skills", "subagent-driven-development", file)),
+      `subagent-driven-development prompt ${file} missing for ${label}`
+    );
+  }
+}
+
+function assertMissingCompanionSkills(root, label) {
+  for (const skillName of companionSkillNames) {
+    assert.ok(
+      !existsSync(path.join(root, "skills", skillName, "SKILL.md")),
+      `companion skill ${skillName} should be absent for ${label}`
+    );
+  }
+
+  for (const file of subagentDrivenDevelopmentPromptFiles) {
+    assert.ok(
+      !existsSync(path.join(root, "skills", "subagent-driven-development", file)),
+      `subagent-driven-development prompt ${file} should be absent for ${label}`
+    );
+  }
+}
+
+async function writeFixtureFiles(root) {
+  for (const file of fixtureFiles) {
+    const fixturePath = path.join(root, file.repo, file.path);
+    await mkdir(path.dirname(fixturePath), { recursive: true });
+    await writeFile(fixturePath, file.content, "utf8");
+  }
+}
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -127,13 +219,22 @@ function canRunNodeSubprocess() {
 }
 
 const scratch = await mkdtemp(path.join(os.tmpdir(), "basd-smoke-"));
+const originalCompanionFixtureRoot = process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR;
 
 try {
+  assert.ok(existsSync(companionManifestPath), "companion skill manifest is missing");
+
+  const companionFixtureRoot = path.join(scratch, "companion-fixtures");
+  await writeFixtureFiles(companionFixtureRoot);
+  process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR = companionFixtureRoot;
+
   const help = await run(["help"]);
   assertSuccess(help, "help");
   assert.match(help.stdout, /basd-coding-dispatch init/);
   assert.match(help.stdout, /hermes\s+Native Hermes skill install.*\(default\)/);
   assert.match(help.stdout, /openclaw/);
+  assert.match(help.stdout, /--skip-companion-skills/);
+  assert.match(help.stdout, /--no-companion-skills/);
 
   const unknown = await run(["missing-command"]);
   assertFailure(unknown, "unknown command");
@@ -143,11 +244,14 @@ try {
   const doctor = await run(["doctor"]);
   assertSuccess(doctor, "doctor");
   assert.match(doctor.stdout, /source: ok/);
+  assert.match(doctor.stdout, /companion manifest: ok/);
   assert.match(doctor.stdout, /hermes cli:/);
   assert.match(doctor.stdout, /hermes home:/);
   assert.doesNotMatch(doctor.stdout, /hermes root:/);
+  assert.match(doctor.stdout, /hermes companion skills:/);
   assert.match(doctor.stdout, /openclaw cli:/);
   assert.match(doctor.stdout, /openclaw workspace:/);
+  assert.match(doctor.stdout, /openclaw companion skills:/);
   assert.match(doctor.stdout, /Doctor passed/);
 
   const originalPathForDoctor = process.env.PATH;
@@ -199,6 +303,10 @@ try {
       new RegExp(`root: ${escapeRegExp(path.join(fakeHome, ".hermes-from-env"))}`)
     );
     assertInstalledSkill(path.join(fakeHome, ".hermes-from-env"), "hermes tilde env");
+    assertInstalledCompanionSkills(
+      path.join(fakeHome, ".hermes-from-env"),
+      "hermes tilde env"
+    );
 
     const openclawTildeEnv = await run(["init", "--target", "openclaw"]);
     assertSuccess(openclawTildeEnv, "openclaw init expands OPENCLAW_WORKSPACE tilde");
@@ -207,6 +315,10 @@ try {
       new RegExp(`root: ${escapeRegExp(path.join(fakeHome, "openclaw-from-env"))}`)
     );
     assertInstalledSkill(path.join(fakeHome, "openclaw-from-env"), "openclaw tilde env");
+    assertInstalledCompanionSkills(
+      path.join(fakeHome, "openclaw-from-env"),
+      "openclaw tilde env"
+    );
 
     const openclawTildeDir = await run([
       "init",
@@ -221,6 +333,10 @@ try {
       new RegExp(`root: ${escapeRegExp(path.join(fakeHome, "openclaw-from-dir"))}`)
     );
     assertInstalledSkill(path.join(fakeHome, "openclaw-from-dir"), "openclaw tilde dir");
+    assertInstalledCompanionSkills(
+      path.join(fakeHome, "openclaw-from-dir"),
+      "openclaw tilde dir"
+    );
 
     const manualTildeDir = await run([
       "init",
@@ -235,6 +351,10 @@ try {
       new RegExp(`dir: ${escapeRegExp(path.join(fakeHome, ".generic-agent-target"))}`)
     );
     assertInstalledSkill(path.join(fakeHome, ".generic-agent-target"), "generic-agent tilde dir");
+    assertMissingCompanionSkills(
+      path.join(fakeHome, ".generic-agent-target"),
+      "generic-agent tilde dir"
+    );
     assert.ok(
       !existsSync(path.join(scratch, "~")),
       "generic-agent tilde dir should not create a literal ./~ directory"
@@ -280,6 +400,10 @@ try {
       path.join(subprocessHome, ".hermes-from-env-subprocess"),
       "subprocess hermes tilde env"
     );
+    assertInstalledCompanionSkills(
+      path.join(subprocessHome, ".hermes-from-env-subprocess"),
+      "subprocess hermes tilde env"
+    );
 
     const openclawTildeEnv = runSubprocess(["init", "--target", "openclaw"], {
       env: subprocessEnv,
@@ -297,6 +421,10 @@ try {
       path.join(subprocessHome, "openclaw-from-env-subprocess"),
       "subprocess openclaw tilde env"
     );
+    assertInstalledCompanionSkills(
+      path.join(subprocessHome, "openclaw-from-env-subprocess"),
+      "subprocess openclaw tilde env"
+    );
 
     const openclawTildeDir = runSubprocess(
       ["init", "--target", "openclaw", "--dir", "~/openclaw-from-dir-subprocess"],
@@ -308,6 +436,10 @@ try {
       new RegExp(`root: ${escapeRegExp(path.join(subprocessHome, "openclaw-from-dir-subprocess"))}`)
     );
     assertInstalledSkill(
+      path.join(subprocessHome, "openclaw-from-dir-subprocess"),
+      "subprocess openclaw tilde dir"
+    );
+    assertInstalledCompanionSkills(
       path.join(subprocessHome, "openclaw-from-dir-subprocess"),
       "subprocess openclaw tilde dir"
     );
@@ -325,6 +457,10 @@ try {
       path.join(subprocessHome, ".generic-agent-target-subprocess"),
       "subprocess generic-agent tilde dir"
     );
+    assertMissingCompanionSkills(
+      path.join(subprocessHome, ".generic-agent-target-subprocess"),
+      "subprocess generic-agent tilde dir"
+    );
     assert.ok(
       !existsSync(path.join(scratch, "~")),
       "subprocess generic-agent tilde dir should not create a literal ./~ directory"
@@ -338,10 +474,39 @@ try {
   assert.match(hermesInit.stdout, /root:/);
   assert.match(hermesInit.stdout, /next: hermes skills list/);
   assertInstalledSkill(hermesHome, "hermes");
+  assertInstalledCompanionSkills(hermesHome, "hermes");
   assert.ok(
     !existsSync(path.join(hermesHome, "AGENTS.md")),
     "hermes target should install only the native skill directory"
   );
+
+  const hermesSkipHome = path.join(scratch, "hermes-skip-home");
+  const hermesSkipInit = await run([
+    "init",
+    "--target",
+    "hermes",
+    "--dir",
+    hermesSkipHome,
+    "--skip-companion-skills"
+  ]);
+  assertSuccess(hermesSkipInit, "init hermes skips companion skills");
+  assert.match(hermesSkipInit.stdout, /companion skills: skipped by flag/);
+  assertInstalledSkill(hermesSkipHome, "hermes skip");
+  assertMissingCompanionSkills(hermesSkipHome, "hermes skip");
+
+  const openclawNoCompanionWorkspace = path.join(scratch, "openclaw-no-companion");
+  const openclawNoCompanionInit = await run([
+    "init",
+    "--target",
+    "openclaw",
+    "--dir",
+    openclawNoCompanionWorkspace,
+    "--no-companion-skills"
+  ]);
+  assertSuccess(openclawNoCompanionInit, "init openclaw skips companion skills alias");
+  assert.match(openclawNoCompanionInit.stdout, /companion skills: skipped by flag/);
+  assertInstalledSkill(openclawNoCompanionWorkspace, "openclaw no companion");
+  assertMissingCompanionSkills(openclawNoCompanionWorkspace, "openclaw no companion");
 
   const openclawWorkspace = path.join(scratch, "openclaw-workspace");
   const openclawInit = await run(["init", "--target", "openclaw", "--dir", openclawWorkspace]);
@@ -349,6 +514,75 @@ try {
   assert.match(openclawInit.stdout, /target: openclaw/);
   assert.match(openclawInit.stdout, /next: openclaw skills list/);
   assertInstalledSkill(openclawWorkspace, "openclaw");
+  assertInstalledCompanionSkills(openclawWorkspace, "openclaw");
+
+  const existingCompanionRoot = path.join(scratch, "existing-companion");
+  const existingCodexPath = path.join(existingCompanionRoot, "skills", "codex", "SKILL.md");
+  await mkdir(path.dirname(existingCodexPath), { recursive: true });
+  await writeFile(existingCodexPath, "keep me\n", "utf8");
+
+  const existingCompanionInit = await run([
+    "init",
+    "--target",
+    "hermes",
+    "--dir",
+    existingCompanionRoot
+  ]);
+  assertSuccess(existingCompanionInit, "init skips existing companion skill");
+  assert.match(existingCompanionInit.stdout, /companion skipped:/);
+  assert.match(existingCompanionInit.stdout, /codex/);
+  assert.equal(await readFile(existingCodexPath, "utf8"), "keep me\n");
+  assertInstalledSkill(existingCompanionRoot, "existing companion root");
+  for (const skillName of companionSkillNames.filter((name) => name !== "codex")) {
+    assert.ok(
+      existsSync(path.join(existingCompanionRoot, "skills", skillName, "SKILL.md")),
+      `companion skill ${skillName} missing after existing-companion install`
+    );
+  }
+
+  const partialCompanionRoot = path.join(scratch, "partial-companion");
+  const partialPromptPath = path.join(
+    partialCompanionRoot,
+    "skills",
+    "subagent-driven-development",
+    "spec-reviewer-prompt.md"
+  );
+  await mkdir(path.dirname(partialPromptPath), { recursive: true });
+  await writeFile(partialPromptPath, "keep partial prompt\n", "utf8");
+
+  const partialCompanionInit = await run([
+    "init",
+    "--target",
+    "hermes",
+    "--dir",
+    partialCompanionRoot
+  ]);
+  assertSuccess(partialCompanionInit, "init completes partial companion skill");
+  assert.match(partialCompanionInit.stdout, /companion completed:/);
+  assert.match(partialCompanionInit.stdout, /subagent-driven-development/);
+  assert.equal(await readFile(partialPromptPath, "utf8"), "keep partial prompt\n");
+  assertInstalledSkill(partialCompanionRoot, "partial companion root");
+  assertInstalledCompanionSkills(partialCompanionRoot, "partial companion root");
+
+  const forceCompanionRoot = path.join(scratch, "force-existing-companion");
+  const forceCodexPath = path.join(forceCompanionRoot, "skills", "codex", "SKILL.md");
+  await mkdir(path.dirname(forceCodexPath), { recursive: true });
+  await writeFile(forceCodexPath, "replace me\n", "utf8");
+
+  const forceCompanionInit = await run([
+    "init",
+    "--target",
+    "hermes",
+    "--dir",
+    forceCompanionRoot,
+    "--force"
+  ]);
+  assertSuccess(forceCompanionInit, "force init overwrites existing companion skill");
+  assert.match(forceCompanionInit.stdout, /companion overwritten:/);
+  assert.match(forceCompanionInit.stdout, /codex/);
+  assert.notEqual(await readFile(forceCodexPath, "utf8"), "replace me\n");
+  assertInstalledSkill(forceCompanionRoot, "force existing companion root");
+  assertInstalledCompanionSkills(forceCompanionRoot, "force existing companion root");
 
   const originalHermesHome = process.env.HERMES_HOME;
   const originalOpenClawWorkspace = process.env.OPENCLAW_WORKSPACE;
@@ -360,12 +594,14 @@ try {
     assert.match(hermesEnvInit.stdout, /target: hermes/);
     assert.match(hermesEnvInit.stdout, new RegExp(`root: ${escapeRegExp(hermesEnvHome)}`));
     assertInstalledSkill(hermesEnvHome, "hermes env");
+    assertInstalledCompanionSkills(hermesEnvHome, "hermes env");
 
     const openclawEnvWorkspace = path.join(scratch, "openclaw-env-workspace");
     process.env.OPENCLAW_WORKSPACE = openclawEnvWorkspace;
     const openclawEnvInit = await run(["init", "--target", "openclaw"]);
     assertSuccess(openclawEnvInit, "init openclaw from OPENCLAW_WORKSPACE");
     assertInstalledSkill(openclawEnvWorkspace, "openclaw env");
+    assertInstalledCompanionSkills(openclawEnvWorkspace, "openclaw env");
   } finally {
     if (originalHermesHome === undefined) {
       delete process.env.HERMES_HOME;
@@ -387,6 +623,7 @@ try {
     assert.match(init.stdout, /created:/);
     assert.match(init.stdout, /skipped:/);
     assertInstalledSkill(destination, target);
+    assertMissingCompanionSkills(destination, target);
   }
 
   const nativeConflictRoot = path.join(scratch, "native-conflict");
@@ -455,5 +692,10 @@ try {
 
   console.log("Smoke test passed");
 } finally {
+  if (originalCompanionFixtureRoot === undefined) {
+    delete process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR;
+  } else {
+    process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR = originalCompanionFixtureRoot;
+  }
   await rm(scratch, { recursive: true, force: true });
 }

@@ -6,17 +6,28 @@ OpenClaw users can run the same dispatch workflow as a workspace skill. Local ev
 
 Hermes remains the maintained home. OpenClaw support is documented as workspace-skill compatible, not as a marketplace, plugin, or ClawHub package. After installing, verify discovery on your local OpenClaw runtime with `openclaw skills list` and `openclaw skills info basd-coding-dispatch`.
 
+By default, the installer also installs pinned companion skills from `integrations/companion-skills.json` when they are missing. These include Hermes Codex/Claude Code worker guides and Superpowers process skills for planning, review, TDD, debugging, and verification. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
+
 ## Install
 
 ```bash
 npx basd-coding-dispatch init --target openclaw
 ```
 
+To install only `basd-coding-dispatch` and skip companion skills for the offline/core-only path:
+
+```bash
+npx basd-coding-dispatch init --target openclaw --skip-companion-skills
+npx basd-coding-dispatch init --target openclaw --no-companion-skills
+```
+
 Destination resolution:
 
-- `--dir <path>` treats `<path>` as the OpenClaw workspace root and installs under `<path>/skills/basd-coding-dispatch/`.
+- `--dir <path>` treats `<path>` as the OpenClaw workspace root and writes under `<path>/skills/`.
 - Without `--dir`, `$OPENCLAW_WORKSPACE` is used when set.
 - Without `--dir` or `$OPENCLAW_WORKSPACE`, the default is `~/openclaw-workspace/skills/basd-coding-dispatch/`.
+
+Runtime discovery depends on the workspace that OpenClaw is actually using. If `openclaw skills list` does not show the skill, check the active OpenClaw workspace path before reinstalling.
 
 ## Expected Skill Files
 
@@ -28,7 +39,9 @@ Destination resolution:
 - `skills/basd-coding-dispatch/references/review-orchestration.md`
 - `skills/basd-coding-dispatch/references/subagent-skill-bundles.md`
 
-The installer refuses to overwrite existing skill files without `--force`.
+Default companion skills install under sibling directories such as `skills/codex/`, `skills/claude-code/`, and `skills/using-superpowers/`. Existing companion skills are skipped unless `--force` is provided.
+
+The installer refuses to overwrite existing core `basd-coding-dispatch` skill files without `--force`.
 
 ## Use From OpenClaw
 
