@@ -1,38 +1,54 @@
-# Mobile Chat Agent Workflow Example
+# Telegram To Hermes Workflow Example
 
-Reference files: `references/quality-gates.md`, `integrations/generic-agent/install.md`
+Reference files: `skills/basd-coding-dispatch/references/quality-gates.md`, `integrations/hermes/install.md`
 
-This example shows a mobile chat control loop while preserving dispatch gates. It uses generic chat references only and does not include private chat identifiers.
+This is the flagship v0.1 loop: the human stays on a phone, Telegram sends the request to a Hermes gateway, Hermes loads `basd-coding-dispatch`, and worker backends do the coding only after the gates are satisfied.
 
-## Mobile Request
+No private chat identifiers, bot tokens, or project paths belong in the public workflow.
+
+## Phone Request
 
 ```text
-Fix the install docs so they are clear about tested versus experimental provider support.
+From Telegram:
+Patch the install flow so Hermes is the default skill path and OpenClaw users get a workspace-skill install. Keep Codex and Claude as worker backends.
 ```
 
-## Dispatcher Response
+## Hermes Dispatcher Response
 
 ```text
-Classification: documentation fix with public repo risk.
-Provider: generic agent implements, dispatcher reviews.
-Spec gate: clarify status labels without claiming native plugin support.
-Implementation-plan gate: update README adaptation table and integration docs, then run validation.
+Classification: install and public docs feature; public repo risk.
+Worker routing: Codex implements CLI/docs changes; independent reviewer checks claims and tests.
+Spec gate: native Hermes install must copy the full skill directory under the Hermes home. OpenClaw install may be documented only as workspace-skill compatible. Other harness adapters stay experimental/manual unless validated.
+Implementation-plan gate: add failing smoke coverage, update CLI install target resolution, copy skill-local references, rewrite README/integration docs, then run package validation.
 ```
 
-## Human Approval
+## Phone Approval
 
 ```text
-Approved. Keep it concise and do not add marketplace claims.
+Approved. Do not push, publish, or claim native marketplace support.
 ```
 
 ## Agent Work
 
-The coding environment performs the edits, runs checks, and reports back to the mobile channel:
+Hermes routes the approved work to a coding backend. The worker edits inside the repository, avoids real `~/.hermes` mutation by using temp dirs in tests, and reports evidence back through Hermes:
 
 ```text
-Changed README.md and integrations/*/install.md.
+Changed:
+- bin/basd-coding-dispatch.mjs
+- skills/basd-coding-dispatch/**
+- integrations/hermes/install.md
+- integrations/openclaw/install.md
+- README.md
+
 Verification:
 - npm run validate: passed
 - npm run smoke-test: passed
-Remaining risk: native harness install paths still need provider-specific validation.
+- npm pack --dry-run: passed
+
+Remaining risk:
+- Cursor, OpenCode, and native Codex/Claude harness adapters remain experimental/manual until their install paths are validated.
 ```
+
+## Why This Works From A Phone
+
+The phone is only the approval and control surface. Hermes keeps the durable skill, the coding backend keeps filesystem access, and the workflow requires concrete checkpoints before expensive or risky steps continue.

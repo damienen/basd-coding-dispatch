@@ -2,7 +2,7 @@
 
 Status: experimental
 
-The OpenCode target currently installs provider-neutral files only. Native extension metadata is planned only after the install path can be validated locally.
+The OpenCode target is a future/manual adapter scaffold. Native extension metadata is planned only after the install path can be validated locally.
 
 ## Install
 
@@ -16,6 +16,7 @@ npx basd-coding-dispatch init --target opencode --dir <project>
 - `llms.txt`
 - `skills/basd-coding-dispatch/SKILL.md`
 - `skills/basd-coding-dispatch/references/README.md`
+- `skills/basd-coding-dispatch/references/*.md`
 - `references/*.md`
 - `integrations/opencode/install.md`
 

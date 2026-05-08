@@ -1,4 +1,4 @@
-# Dual Provider Review Example
+# Dual Worker Review Example
 
 Reference files: `references/review-orchestration.md`, `references/session-topology.md`
 
@@ -10,9 +10,9 @@ Implement a release workflow skeleton and make sure it cannot publish unless the
 
 Release and packaging task. Higher risk because incorrect claims or unsafe publish behavior can affect public packages.
 
-## Provider Selection
+## Worker Routing
 
-Provider A implements the workflow. Provider B reviews the diff and checks whether the workflow is safe, conventional, and honest.
+Worker A implements the workflow. Worker B reviews the diff and checks whether the workflow is safe, conventional, and honest.
 
 ## Implementer Brief
 

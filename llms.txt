@@ -1,6 +1,6 @@
 # basd-coding-dispatch
 
-Purpose: provider-neutral, subagent-driven coding workflow for plan-first AI coding agents.
+Purpose: Hermes/OpenClaw-first coding-dispatch skill for approval-gated mobile and Telegram coding workflows.
 
 Primary files:
 - README.md
@@ -10,11 +10,13 @@ Primary files:
 - references/session-topology.md
 - references/review-orchestration.md
 - references/subagent-skill-bundles.md
+- integrations/hermes/install.md
+- integrations/openclaw/install.md
 - integrations/*/install.md
 - examples/*.md
 
 Rules for agents:
-- Classify the task before provider selection.
+- Classify the task before worker routing.
 - Use spec and implementation-plan gates for non-trivial work.
 - Keep provider mechanics outside the portable skill.
 - Verify before completion.

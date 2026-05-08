@@ -10,7 +10,7 @@ The CLI exits zero for an unknown command. Make unknown commands print help and 
 
 Small fix. User-visible CLI behavior. No spec gate needed beyond the stated behavior.
 
-## Provider
+## Worker Routing
 
 Codex implements. Independent review is lightweight because the change is small but touches CLI behavior.
 

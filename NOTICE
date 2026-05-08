@@ -1,7 +1,7 @@
 basd-coding-dispatch
 
-This repository packages a provider-neutral coding dispatch workflow, examples,
-reference documentation, and a small npm scaffolder.
+This repository packages a Hermes/OpenClaw-first coding dispatch workflow,
+examples, reference documentation, and a small npm scaffolder.
 
 The workflow is inspired by rigorous agent-process practices, including
 plan-first gates and independent review, without implying affiliation with any

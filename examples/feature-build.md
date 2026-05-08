@@ -4,7 +4,7 @@ Reference files: `references/quality-gates.md`, `references/session-topology.md`
 
 ## Request
 
-Add a new provider target for a coding harness.
+Add a new worker adapter target for a coding harness.
 
 ## Classification
 

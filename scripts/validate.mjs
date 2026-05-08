@@ -26,12 +26,18 @@ const requiredFiles = [
   "scripts/smoke-test.mjs",
   "skills/basd-coding-dispatch/SKILL.md",
   "skills/basd-coding-dispatch/references/README.md",
+  "skills/basd-coding-dispatch/references/quality-gates.md",
+  "skills/basd-coding-dispatch/references/provider-command-recipes.md",
+  "skills/basd-coding-dispatch/references/session-topology.md",
+  "skills/basd-coding-dispatch/references/review-orchestration.md",
+  "skills/basd-coding-dispatch/references/subagent-skill-bundles.md",
   "references/quality-gates.md",
   "references/provider-command-recipes.md",
   "references/session-topology.md",
   "references/review-orchestration.md",
   "references/subagent-skill-bundles.md",
   "integrations/hermes/install.md",
+  "integrations/openclaw/install.md",
   "integrations/codex/install.md",
   "integrations/claude-code/install.md",
   "integrations/opencode/install.md",
@@ -101,18 +107,27 @@ const exampleReferences = {
     "references/session-topology.md"
   ],
   "examples/telegram-agent-workflow.md": [
-    "references/quality-gates.md",
-    "integrations/generic-agent/install.md"
+    "skills/basd-coding-dispatch/references/quality-gates.md",
+    "integrations/hermes/install.md"
   ]
 };
 
 const integrationDocs = [
   "integrations/hermes/install.md",
+  "integrations/openclaw/install.md",
   "integrations/codex/install.md",
   "integrations/claude-code/install.md",
   "integrations/opencode/install.md",
   "integrations/cursor/install.md",
   "integrations/generic-agent/install.md"
+];
+
+const skillReferenceFiles = [
+  "quality-gates.md",
+  "provider-command-recipes.md",
+  "session-topology.md",
+  "review-orchestration.md",
+  "subagent-skill-bundles.md"
 ];
 
 function addError(message) {
@@ -192,6 +207,16 @@ async function validatePackageJson() {
   if (packageJson.scripts?.["smoke-test"] !== "node scripts/smoke-test.mjs") {
     addError("package.json scripts.smoke-test must run node scripts/smoke-test.mjs");
   }
+
+  if (!packageJson.description?.includes("Hermes/OpenClaw")) {
+    addError("package.json description must lead with Hermes/OpenClaw positioning");
+  }
+
+  for (const keyword of ["hermes", "openclaw", "telegram", "mobile", "codex", "claude"]) {
+    if (!packageJson.keywords?.includes(keyword)) {
+      addError(`package.json keywords must include ${keyword}`);
+    }
+  }
 }
 
 async function validateSkillFrontmatter() {
@@ -218,6 +243,35 @@ async function validateSkillFrontmatter() {
 
   if (!fields.description) {
     addError(`${skillPath} frontmatter is missing description`);
+  }
+}
+
+async function validateSkillReferences() {
+  const skillPath = "skills/basd-coding-dispatch/SKILL.md";
+  const content = await readFile(path.join(repoRoot, skillPath), "utf8");
+
+  for (const file of skillReferenceFiles) {
+    const skillReference = `references/${file}`;
+    const skillLocalPath = `skills/basd-coding-dispatch/references/${file}`;
+
+    if (!existsSync(path.join(repoRoot, skillLocalPath))) {
+      addError(`Installed skill reference is missing: ${skillLocalPath}`);
+    }
+
+    if (!content.includes(skillReference)) {
+      addError(`${skillPath} should mention ${skillReference}`);
+    }
+  }
+
+  const referenceReadme = await readFile(
+    path.join(repoRoot, "skills/basd-coding-dispatch/references/README.md"),
+    "utf8"
+  );
+
+  for (const file of skillReferenceFiles) {
+    if (!referenceReadme.includes(file)) {
+      addError(`skills/basd-coding-dispatch/references/README.md should mention ${file}`);
+    }
   }
 }
 
@@ -257,6 +311,10 @@ async function validateExampleReferences() {
 
 async function validateIntegrationStatuses() {
   for (const file of integrationDocs) {
+    if (!existsSync(path.join(repoRoot, file))) {
+      continue;
+    }
+
     const content = await readFile(path.join(repoRoot, file), "utf8");
     if (!/^Status:\s*(tested|experimental|planned)$/m.test(content)) {
       addError(`${file} must include a status label of tested, experimental, or planned`);
@@ -275,7 +333,7 @@ function validateForbiddenPublicFiles() {
 async function validateReadme() {
   const content = await readFile(path.join(repoRoot, "README.md"), "utf8");
   const firstLine = content.split("\n")[0];
-  const requiredFirstSentence = "`basd-coding-dispatch` is a provider-neutral, subagent-driven coding workflow for plan-first AI coding agents.";
+  const requiredFirstSentence = "`basd-coding-dispatch` is a native Hermes/OpenClaw coding-dispatch skill for approval-gated coding from Telegram and mobile chat.";
 
   if (firstLine !== requiredFirstSentence) {
     addError("README.md first sentence does not match the required text");
@@ -283,8 +341,13 @@ async function validateReadme() {
 
   for (const requiredText of [
     "npx basd-coding-dispatch init",
-    "Codex / Claude / split",
-    "Superpowers",
+    "Telegram",
+    "mobile",
+    "worker-routing",
+    "Codex",
+    "Claude",
+    "OpenClaw",
+    "Hermes is the maintained home",
     "quality gates"
   ]) {
     if (!content.includes(requiredText)) {
@@ -300,6 +363,7 @@ export async function runValidation(options = {}) {
   await validateRequiredFiles();
   await validatePackageJson();
   await validateSkillFrontmatter();
+  await validateSkillReferences();
   await validateLeakageScan();
   await validateExampleReferences();
   await validateIntegrationStatuses();

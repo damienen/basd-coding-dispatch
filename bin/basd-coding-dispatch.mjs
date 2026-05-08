@@ -1,21 +1,40 @@
 #!/usr/bin/env node
 
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runValidation } from "../scripts/validate.mjs";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const skillDirectory = "skills/basd-coding-dispatch";
+const skillReferenceFiles = [
+  "quality-gates.md",
+  "provider-command-recipes.md",
+  "session-topology.md",
+  "review-orchestration.md",
+  "subagent-skill-bundles.md"
+];
+const skillFiles = [
+  `${skillDirectory}/SKILL.md`,
+  `${skillDirectory}/references/README.md`,
+  ...skillReferenceFiles.map((file) => `${skillDirectory}/references/${file}`)
+];
+const rootReferenceFiles = skillReferenceFiles.map((file) => `references/${file}`);
 
 const TARGETS = [
   "hermes",
+  "openclaw",
   "codex",
   "claude-code",
   "opencode",
   "cursor",
   "generic-agent"
 ];
+const DEFAULT_TARGET = "hermes";
+const NATIVE_SKILL_TARGETS = new Set(["hermes", "openclaw"]);
 
 const REQUIRED_SOURCE_FILES = [
   "README.md",
@@ -32,14 +51,10 @@ const REQUIRED_SOURCE_FILES = [
   "bin/basd-coding-dispatch.mjs",
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
-  "skills/basd-coding-dispatch/SKILL.md",
-  "skills/basd-coding-dispatch/references/README.md",
-  "references/quality-gates.md",
-  "references/provider-command-recipes.md",
-  "references/session-topology.md",
-  "references/review-orchestration.md",
-  "references/subagent-skill-bundles.md",
+  ...skillFiles,
+  ...rootReferenceFiles,
   "integrations/hermes/install.md",
+  "integrations/openclaw/install.md",
   "integrations/codex/install.md",
   "integrations/claude-code/install.md",
   "integrations/opencode/install.md",
@@ -63,21 +78,11 @@ const REQUIRED_SOURCE_FILES = [
 
 const BASE_SCAFFOLD_FILES = [
   "llms.txt",
-  "skills/basd-coding-dispatch/SKILL.md",
-  "skills/basd-coding-dispatch/references/README.md",
-  "references/quality-gates.md",
-  "references/provider-command-recipes.md",
-  "references/session-topology.md",
-  "references/review-orchestration.md",
-  "references/subagent-skill-bundles.md"
+  ...skillFiles,
+  ...rootReferenceFiles
 ];
 
 const TARGET_FILES = {
-  hermes: [
-    "AGENTS.md",
-    ...BASE_SCAFFOLD_FILES,
-    "integrations/hermes/install.md"
-  ],
   codex: [
     "AGENTS.md",
     ...BASE_SCAFFOLD_FILES,
@@ -118,24 +123,28 @@ Usage:
   basd-coding-dispatch help
 
 Targets:
-  hermes
-  codex
-  claude-code
-  opencode
-  cursor
-  generic-agent
+  hermes        Native Hermes skill install under $HERMES_HOME/skills or ~/.hermes/skills (default)
+  openclaw      OpenClaw workspace skill install under ~/openclaw-workspace/skills
+  generic-agent Manual project scaffold
+  codex         Experimental manual adapter scaffold
+  claude-code   Experimental manual adapter scaffold
+  opencode      Experimental manual adapter scaffold
+  cursor        Experimental manual adapter scaffold
 
 Examples:
   basd-coding-dispatch init
-  basd-coding-dispatch init --target codex --dir ./my-project
+  basd-coding-dispatch init --dir ~/.hermes
+  basd-coding-dispatch init --target openclaw --dir ~/openclaw-workspace
+  basd-coding-dispatch init --target generic-agent --dir ./my-project
   basd-coding-dispatch doctor
 `);
 }
 
 function parseInitArgs(args) {
   const options = {
-    target: "generic-agent",
-    dir: process.cwd(),
+    target: DEFAULT_TARGET,
+    dir: undefined,
+    dirProvided: false,
     force: false
   };
 
@@ -155,6 +164,7 @@ function parseInitArgs(args) {
         throw new Error("--dir requires a value");
       }
       options.dir = value;
+      options.dirProvided = true;
       index += 1;
     } else if (arg === "--force") {
       options.force = true;
@@ -191,6 +201,122 @@ async function copyScaffoldFile(relativeFile, destinationRoot) {
   await writeFile(destinationPath, content, "utf8");
 }
 
+async function listSourceFiles(relativeDirectory) {
+  const fullDirectory = path.join(packageRoot, relativeDirectory);
+  const entries = await readdir(fullDirectory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listSourceFiles(relativePath));
+    } else if (entry.isFile()) {
+      files.push(relativePath);
+    }
+  }
+
+  return files.sort();
+}
+
+function formatFile(file) {
+  return file.split(path.sep).join("/");
+}
+
+function expandHomePath(value) {
+  if (value === "~") {
+    return os.homedir();
+  }
+
+  if (value.startsWith("~/") || value.startsWith("~\\")) {
+    return path.join(os.homedir(), value.slice(2));
+  }
+
+  return value;
+}
+
+function resolveUserPath(value) {
+  return path.resolve(process.cwd(), expandHomePath(value));
+}
+
+function resolveNativeRoot(target, options = {}) {
+  if (options.dirProvided) {
+    return resolveUserPath(options.dir);
+  }
+
+  if (target === "hermes") {
+    return resolveUserPath(process.env.HERMES_HOME || path.join(os.homedir(), ".hermes"));
+  }
+
+  if (target === "openclaw") {
+    return resolveUserPath(
+      process.env.OPENCLAW_WORKSPACE || path.join(os.homedir(), "openclaw-workspace")
+    );
+  }
+
+  throw new Error(`Unsupported native target: ${target}`);
+}
+
+function printNativeNextStep(target) {
+  if (target === "hermes") {
+    process.stdout.write("next: hermes skills list\n");
+    process.stdout.write("next: /skill basd-coding-dispatch\n");
+    return;
+  }
+
+  process.stdout.write("next: openclaw skills list\n");
+  process.stdout.write("next: /skill basd-coding-dispatch\n");
+}
+
+async function initNativeSkill(options) {
+  const root = resolveNativeRoot(options.target, options);
+  const installDir = path.join(root, "skills", "basd-coding-dispatch");
+  const sourceFiles = await listSourceFiles(skillDirectory);
+  const plannedFiles = sourceFiles.map((sourceFile) => {
+    const skillRelativeFile = path.relative(skillDirectory, sourceFile);
+    const outputFile = path.join("skills", "basd-coding-dispatch", skillRelativeFile);
+
+    return {
+      sourceFile,
+      outputFile: formatFile(outputFile),
+      destinationPath: path.join(root, outputFile)
+    };
+  });
+
+  const refusedFiles = plannedFiles
+    .filter((file) => existsSync(file.destinationPath) && !options.force)
+    .map((file) => file.outputFile);
+
+  if (refusedFiles.length > 0) {
+    process.stdout.write(`target: ${options.target}\n`);
+    process.stdout.write(`root: ${root}\n`);
+    process.stdout.write(`dir: ${installDir}\n`);
+    printFileList("created", []);
+    printFileList("skipped", []);
+    printFileList("refused", refusedFiles);
+    printNativeNextStep(options.target);
+    process.stderr.write("Refusing to overwrite existing skill files without --force.\n");
+    return 1;
+  }
+
+  const createdFiles = [];
+  for (const file of plannedFiles) {
+    const content = await readFile(path.join(packageRoot, file.sourceFile), "utf8");
+    await mkdir(path.dirname(file.destinationPath), { recursive: true });
+    await writeFile(file.destinationPath, content, "utf8");
+    createdFiles.push(file.outputFile);
+  }
+
+  process.stdout.write(`target: ${options.target}\n`);
+  process.stdout.write(`root: ${root}\n`);
+  process.stdout.write(`dir: ${installDir}\n`);
+  printFileList("created", createdFiles);
+  printFileList("skipped", []);
+  printFileList("refused", []);
+  printNativeNextStep(options.target);
+
+  return 0;
+}
+
 async function init(args) {
   let options;
   try {
@@ -206,10 +332,14 @@ async function init(args) {
     return 0;
   }
 
+  if (NATIVE_SKILL_TARGETS.has(options.target)) {
+    return initNativeSkill(options);
+  }
+
   const selectedFiles = TARGET_FILES[options.target];
   const selectedSet = new Set(selectedFiles);
   const skippedFiles = ALL_SCAFFOLD_FILES.filter((file) => !selectedSet.has(file));
-  const destinationRoot = path.resolve(process.cwd(), options.dir);
+  const destinationRoot = path.resolve(process.cwd(), options.dir ?? ".");
   const refusedFiles = selectedFiles.filter((file) => {
     return existsSync(path.join(destinationRoot, file)) && !options.force;
   });
@@ -239,12 +369,107 @@ async function init(args) {
   return 0;
 }
 
-function doctor() {
-  const missing = REQUIRED_SOURCE_FILES.filter((file) => {
-    return !existsSync(path.join(packageRoot, file));
+function commandCandidates(command) {
+  if (path.isAbsolute(command) || command.includes("/") || command.includes("\\")) {
+    return [command];
+  }
+
+  const directories = (process.env.PATH || "")
+    .split(path.delimiter)
+    .filter(Boolean);
+  const extensions = process.platform === "win32"
+    ? (process.env.PATHEXT || ".EXE;.CMD;.BAT;.COM")
+      .split(";")
+      .filter(Boolean)
+    : [""];
+
+  return directories.flatMap((directory) => {
+    return extensions.map((extension) => path.join(directory, `${command}${extension}`));
+  });
+}
+
+function findCommand(command) {
+  return commandCandidates(command).find((candidate) => existsSync(candidate));
+}
+
+function firstOutputLine(value) {
+  return (value || "").trim().split(/\r?\n/)[0]?.trim() || "";
+}
+
+function commandStatus(command, args, options = {}) {
+  const executable = findCommand(command);
+
+  if (!executable) {
+    return "missing";
+  }
+
+  const result = spawnSync(executable, args, {
+    encoding: "utf8",
+    timeout: 5000
   });
 
+  if (result.error?.code === "ENOENT") {
+    return "missing";
+  }
+
+  const stdoutLine = firstOutputLine(result.stdout);
+
+  if (stdoutLine) {
+    return `present (${stdoutLine})`;
+  }
+
+  let fallbackStderrLine = "";
+  if (options.nodeFallback) {
+    const fallback = spawnSync(process.execPath, [executable, ...args], {
+      encoding: "utf8",
+      timeout: 5000
+    });
+    const fallbackStdoutLine = firstOutputLine(fallback.stdout);
+
+    if (fallbackStdoutLine) {
+      return `present (${fallbackStdoutLine})`;
+    }
+
+    fallbackStderrLine = firstOutputLine(fallback.stderr);
+  }
+
+  const stderrLine = firstOutputLine(result.stderr);
+
+  if (stderrLine) {
+    return `present (${stderrLine})`;
+  }
+
+  if (fallbackStderrLine) {
+    return `present (${fallbackStderrLine})`;
+  }
+
+  return `present (${executable})`;
+}
+
+function printInstallStatus(label, root, skillPath) {
+  process.stdout.write(`${label} root: ${root}\n`);
+  process.stdout.write(
+    `${label} skill: ${existsSync(skillPath) ? "installed" : "missing"} at ${skillPath}\n`
+  );
+}
+
+async function doctor() {
+  const validationErrors = [];
+  const validationStatus = await runValidation({
+    rootDir: packageRoot,
+    stdout: { write: () => true },
+    stderr: {
+      write: (chunk) => {
+        validationErrors.push(String(chunk));
+        return true;
+      }
+    }
+  });
   const targetErrors = TARGETS.flatMap((target) => {
+    if (NATIVE_SKILL_TARGETS.has(target)) {
+      return [];
+    }
+
     const files = TARGET_FILES[target] ?? [];
     if (files.length === 0) {
       return [`target ${target} has no scaffold files`];
@@ -254,16 +479,36 @@ function doctor() {
       .map((file) => `target ${target} references unknown source file ${file}`);
   });
 
-  if (missing.length > 0 || targetErrors.length > 0) {
-    for (const file of missing) {
-      process.stderr.write(`missing: ${file}\n`);
-    }
+  const hasSourceErrors = validationStatus !== 0 || targetErrors.length > 0;
+
+  process.stdout.write(`source: ${hasSourceErrors ? "failed" : "ok"}\n`);
+
+  if (hasSourceErrors) {
+    process.stderr.write(validationErrors.join(""));
     for (const error of targetErrors) {
       process.stderr.write(`${error}\n`);
     }
     return 1;
   }
 
+  const hermesRoot = resolveNativeRoot("hermes", { dirProvided: false });
+  const openclawRoot = resolveNativeRoot("openclaw", { dirProvided: false });
+
+  process.stdout.write(`hermes cli: ${commandStatus("hermes", ["--version"])}\n`);
+  printInstallStatus(
+    "hermes",
+    hermesRoot,
+    path.join(hermesRoot, "skills", "basd-coding-dispatch", "SKILL.md")
+  );
+  process.stdout.write(`openclaw cli: ${commandStatus("openclaw", ["--version"], { nodeFallback: true })}\n`);
+  process.stdout.write(`openclaw workspace: ${openclawRoot}\n`);
+  process.stdout.write(
+    `openclaw skill: ${
+      existsSync(path.join(openclawRoot, "skills", "basd-coding-dispatch", "SKILL.md"))
+        ? "installed"
+        : "missing"
+    } at ${path.join(openclawRoot, "skills", "basd-coding-dispatch", "SKILL.md")}\n`
+  );
   process.stdout.write("Doctor passed\n");
   return 0;
 }

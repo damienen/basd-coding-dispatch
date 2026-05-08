@@ -2,7 +2,7 @@
 
 Status: experimental
 
-The v0.1 integration is a manual scaffold. Native Claude Code marketplace or plugin metadata is not included because this repo has not validated that path.
+Claude Code is a supported worker backend for implementation and review. This target is an experimental manual adapter scaffold, not a native Claude Code marketplace or plugin install.
 
 ## Install
 
@@ -16,9 +16,10 @@ npx basd-coding-dispatch init --target claude-code --dir <project>
 - `llms.txt`
 - `skills/basd-coding-dispatch/SKILL.md`
 - `skills/basd-coding-dispatch/references/README.md`
+- `skills/basd-coding-dispatch/references/*.md`
 - `references/*.md`
 - `integrations/claude-code/install.md`
 
 ## Usage
 
-Keep `CLAUDE.md` strict and short. Load the public skill for workflow and the references only when the task needs provider selection, review orchestration, or quality gates.
+Keep `CLAUDE.md` strict and short. Load the public skill for workflow and the references only when the task needs worker routing, review orchestration, or quality gates.

@@ -1,10 +1,12 @@
 # Skill References
 
-The public skill stays lean so it can be loaded by many providers. Detailed mechanics live in the repository-level `references/` and `integrations/` directories.
+Hermes and OpenClaw install the full `skills/basd-coding-dispatch/` directory. These reference files are skill-local so an installed skill can work without reaching back into the repository root.
 
 Suggested loading order:
 
 1. Start with `skills/basd-coding-dispatch/SKILL.md`.
-2. Load `references/quality-gates.md` for task gates.
-3. Load provider-specific install notes from `integrations/` only when adapting to that provider.
-4. Load examples only when the user needs a concrete transcript shape.
+2. Load `references/quality-gates.md` for classification, spec, plan, review, and verification gates.
+3. Load `references/provider-command-recipes.md` for Hermes/OpenClaw installs and worker command shapes.
+4. Load `references/session-topology.md` for mobile dispatch, single-worker, split-worker, and subagent sessions.
+5. Load `references/review-orchestration.md` when meaningful implementation work needs independent review.
+6. Load `references/subagent-skill-bundles.md` when assigning bounded worker tasks.
