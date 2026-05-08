@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -144,10 +144,32 @@ try {
   assertSuccess(doctor, "doctor");
   assert.match(doctor.stdout, /source: ok/);
   assert.match(doctor.stdout, /hermes cli:/);
-  assert.match(doctor.stdout, /hermes root:/);
+  assert.match(doctor.stdout, /hermes home:/);
+  assert.doesNotMatch(doctor.stdout, /hermes root:/);
   assert.match(doctor.stdout, /openclaw cli:/);
   assert.match(doctor.stdout, /openclaw workspace:/);
   assert.match(doctor.stdout, /Doctor passed/);
+
+  const originalPathForDoctor = process.env.PATH;
+  try {
+    const fakeBin = path.join(scratch, "fake-bin");
+    await mkdir(path.join(fakeBin, "hermes"), { recursive: true });
+    await mkdir(path.join(fakeBin, "openclaw"), { recursive: true });
+    process.env.PATH = fakeBin;
+
+    const weirdDoctor = await run(["doctor"]);
+    assertSuccess(weirdDoctor, "doctor handles non-ENOENT spawn errors");
+    assert.match(weirdDoctor.stdout, /hermes cli: error \(/);
+    assert.doesNotMatch(weirdDoctor.stdout, /hermes cli: present \(/);
+    assert.match(weirdDoctor.stdout, /openclaw cli: error \(/);
+    assert.doesNotMatch(weirdDoctor.stdout, /openclaw cli: present \(/);
+  } finally {
+    if (originalPathForDoctor === undefined) {
+      delete process.env.PATH;
+    } else {
+      process.env.PATH = originalPathForDoctor;
+    }
+  }
 
   const validate = await run(["validate"]);
   assertSuccess(validate, "validate");
@@ -199,6 +221,24 @@ try {
       new RegExp(`root: ${escapeRegExp(path.join(fakeHome, "openclaw-from-dir"))}`)
     );
     assertInstalledSkill(path.join(fakeHome, "openclaw-from-dir"), "openclaw tilde dir");
+
+    const manualTildeDir = await run([
+      "init",
+      "--target",
+      "generic-agent",
+      "--dir",
+      "~/.generic-agent-target"
+    ]);
+    assertSuccess(manualTildeDir, "generic-agent init expands --dir tilde");
+    assert.match(
+      manualTildeDir.stdout,
+      new RegExp(`dir: ${escapeRegExp(path.join(fakeHome, ".generic-agent-target"))}`)
+    );
+    assertInstalledSkill(path.join(fakeHome, ".generic-agent-target"), "generic-agent tilde dir");
+    assert.ok(
+      !existsSync(path.join(scratch, "~")),
+      "generic-agent tilde dir should not create a literal ./~ directory"
+    );
   } finally {
     process.chdir(originalCwd);
 
@@ -270,6 +310,24 @@ try {
     assertInstalledSkill(
       path.join(subprocessHome, "openclaw-from-dir-subprocess"),
       "subprocess openclaw tilde dir"
+    );
+
+    const manualTildeDir = runSubprocess(
+      ["init", "--target", "generic-agent", "--dir", "~/.generic-agent-target-subprocess"],
+      { env: { ...process.env, HOME: subprocessHome }, cwd: scratch }
+    );
+    assertSuccess(manualTildeDir, "subprocess generic-agent init expands --dir tilde");
+    assert.match(
+      manualTildeDir.stdout,
+      new RegExp(`dir: ${escapeRegExp(path.join(subprocessHome, ".generic-agent-target-subprocess"))}`)
+    );
+    assertInstalledSkill(
+      path.join(subprocessHome, ".generic-agent-target-subprocess"),
+      "subprocess generic-agent tilde dir"
+    );
+    assert.ok(
+      !existsSync(path.join(scratch, "~")),
+      "subprocess generic-agent tilde dir should not create a literal ./~ directory"
     );
   }
 

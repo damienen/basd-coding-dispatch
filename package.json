@@ -1,7 +1,7 @@
 {
   "name": "basd-coding-dispatch",
   "version": "0.1.0",
-  "description": "Hermes/OpenClaw-first coding-dispatch skill for approval-gated mobile and Telegram coding workflows.",
+  "description": "Hermes/OpenClaw provider-agnostic coding dispatch skill for approval-gated AI coding from any channel.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/damienen/basd-coding-dispatch.git"

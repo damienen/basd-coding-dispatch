@@ -339,7 +339,7 @@ async function init(args) {
   const selectedFiles = TARGET_FILES[options.target];
   const selectedSet = new Set(selectedFiles);
   const skippedFiles = ALL_SCAFFOLD_FILES.filter((file) => !selectedSet.has(file));
-  const destinationRoot = path.resolve(process.cwd(), options.dir ?? ".");
+  const destinationRoot = resolveUserPath(options.dir ?? ".");
   const refusedFiles = selectedFiles.filter((file) => {
     return existsSync(path.join(destinationRoot, file)) && !options.force;
   });
@@ -396,6 +396,19 @@ function firstOutputLine(value) {
   return (value || "").trim().split(/\r?\n/)[0]?.trim() || "";
 }
 
+function nodeFallbackOutputLines(executable, args) {
+  const fallback = spawnSync(process.execPath, [executable, ...args], {
+    encoding: "utf8",
+    timeout: 5000
+  });
+
+  return {
+    succeeded: fallback.status === 0 && !fallback.error,
+    stdoutLine: firstOutputLine(fallback.stdout),
+    stderrLine: firstOutputLine(fallback.stderr)
+  };
+}
+
 function commandStatus(command, args, options = {}) {
   const executable = findCommand(command);
 
@@ -412,6 +425,22 @@ function commandStatus(command, args, options = {}) {
     return "missing";
   }
 
+  if (result.error) {
+    if (options.nodeFallback) {
+      const fallbackLines = nodeFallbackOutputLines(executable, args);
+
+      if (fallbackLines.succeeded && fallbackLines.stdoutLine) {
+        return `present (${fallbackLines.stdoutLine})`;
+      }
+
+      if (fallbackLines.succeeded && fallbackLines.stderrLine) {
+        return `present (${fallbackLines.stderrLine})`;
+      }
+    }
+
+    return `error (${result.error.code || result.error.message || "unknown spawn error"})`;
+  }
+
   const stdoutLine = firstOutputLine(result.stdout);
 
   if (stdoutLine) {
@@ -420,17 +449,15 @@ function commandStatus(command, args, options = {}) {
 
   let fallbackStderrLine = "";
   if (options.nodeFallback) {
-    const fallback = spawnSync(process.execPath, [executable, ...args], {
-      encoding: "utf8",
-      timeout: 5000
-    });
-    const fallbackStdoutLine = firstOutputLine(fallback.stdout);
+    const fallbackLines = nodeFallbackOutputLines(executable, args);
 
-    if (fallbackStdoutLine) {
-      return `present (${fallbackStdoutLine})`;
+    if (fallbackLines.succeeded && fallbackLines.stdoutLine) {
+      return `present (${fallbackLines.stdoutLine})`;
     }
 
-    fallbackStderrLine = firstOutputLine(fallback.stderr);
+    if (fallbackLines.succeeded) {
+      fallbackStderrLine = fallbackLines.stderrLine;
+    }
   }
 
   const stderrLine = firstOutputLine(result.stderr);
@@ -446,8 +473,8 @@ function commandStatus(command, args, options = {}) {
   return `present (${executable})`;
 }
 
-function printInstallStatus(label, root, skillPath) {
-  process.stdout.write(`${label} root: ${root}\n`);
+function printInstallStatus(label, root, skillPath, rootLabel = "root") {
+  process.stdout.write(`${label} ${rootLabel}: ${root}\n`);
   process.stdout.write(
     `${label} skill: ${existsSync(skillPath) ? "installed" : "missing"} at ${skillPath}\n`
   );
@@ -498,7 +525,8 @@ async function doctor() {
   printInstallStatus(
     "hermes",
     hermesRoot,
-    path.join(hermesRoot, "skills", "basd-coding-dispatch", "SKILL.md")
+    path.join(hermesRoot, "skills", "basd-coding-dispatch", "SKILL.md"),
+    "home"
   );
   process.stdout.write(`openclaw cli: ${commandStatus("openclaw", ["--version"], { nodeFallback: true })}\n`);
   process.stdout.write(`openclaw workspace: ${openclawRoot}\n`);
