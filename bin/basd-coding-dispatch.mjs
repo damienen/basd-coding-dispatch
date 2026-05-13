@@ -12,6 +12,12 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const skillDirectory = "skills/basd-coding-dispatch";
 const skillReferenceFiles = [
   "quality-gates.md",
+  "quality-profiles.md",
+  "edge-case-packs.md",
+  "review-packets.md",
+  "superpowers-integration.md",
+  "prompt-templates.md",
+  "plan-linter.md",
   "provider-command-recipes.md",
   "session-topology.md",
   "review-orchestration.md",
@@ -52,6 +58,7 @@ const REQUIRED_SOURCE_FILES = [
   "bin/basd-coding-dispatch.mjs",
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
+  "scripts/workflow-evals.mjs",
   companionManifestFile,
   ...skillFiles,
   ...rootReferenceFiles,
@@ -120,7 +127,7 @@ function printHelp(stream = process.stdout) {
 
 Usage:
   basd-coding-dispatch init [--target <target>] [--dir <path>] [--force] [--skip-companion-skills]
-  basd-coding-dispatch doctor
+  basd-coding-dispatch doctor [--json]
   basd-coding-dispatch validate
   basd-coding-dispatch help
 
@@ -140,6 +147,7 @@ Examples:
   basd-coding-dispatch init --target openclaw --dir ~/openclaw-workspace
   basd-coding-dispatch init --target generic-agent --dir ./my-project
   basd-coding-dispatch doctor
+  basd-coding-dispatch doctor --json
 
 Options:
   --skip-companion-skills  Do not fetch default companion skills for native targets
@@ -187,6 +195,25 @@ function parseInitArgs(args) {
 
   if (!TARGETS.includes(options.target)) {
     throw new Error(`Unknown target: ${options.target}`);
+  }
+
+  return options;
+}
+
+function parseDoctorArgs(args) {
+  const options = {
+    json: false,
+    help: false
+  };
+
+  for (const arg of args) {
+    if (arg === "--json") {
+      options.json = true;
+    } else if (arg === "--help" || arg === "-h") {
+      options.help = true;
+    } else {
+      throw new Error(`Unknown doctor option: ${arg}`);
+    }
   }
 
   return options;
@@ -632,36 +659,115 @@ function commandStatus(command, args, options = {}) {
   return `present (${executable})`;
 }
 
-function printInstallStatus(label, root, skillPath, rootLabel = "root") {
-  process.stdout.write(`${label} ${rootLabel}: ${root}\n`);
-  process.stdout.write(
-    `${label} skill: ${existsSync(skillPath) ? "installed" : "missing"} at ${skillPath}\n`
-  );
+function installedStatus(filePath) {
+  return existsSync(filePath) ? "installed" : "missing";
 }
 
-function printCompanionInstallStatus(label, root, skills) {
-  process.stdout.write(`${label} companion skills:\n`);
-  for (const skill of skills) {
-    const skillPath = path.join(root, "skills", skill.name, "SKILL.md");
-    process.stdout.write(
-      `  ${skill.name}: ${existsSync(skillPath) ? "installed" : "missing"} at ${skillPath}\n`
-    );
-  }
-}
+function companionMetadataIssues(manifest) {
+  const issues = [];
 
-async function doctor() {
-  const validationErrors = [];
-  const validationStatus = await runValidation({
-    rootDir: packageRoot,
-    stdout: { write: () => true },
-    stderr: {
-      write: (chunk) => {
-        validationErrors.push(String(chunk));
-        return true;
+  for (const skill of manifest.skills ?? []) {
+    if (!/^[a-f0-9]{40}$/i.test(skill.ref ?? "")) {
+      issues.push(`${skill.name || "unnamed"} uses a non-pinned ref`);
+    }
+
+    for (const file of skill.files ?? []) {
+      if (typeof file.rawUrl !== "string") {
+        issues.push(`${skill.name || "unnamed"} has a companion file without a rawUrl`);
+        continue;
+      }
+
+      if (!file.rawUrl.includes(`/${skill.ref}/`)) {
+        issues.push(`${skill.name || "unnamed"} rawUrl does not include its pinned ref`);
+      }
+
+      if (/\/(main|master|HEAD)\//.test(file.rawUrl)) {
+        issues.push(`${skill.name || "unnamed"} rawUrl appears to use a moving default ref`);
       }
     }
+  }
+
+  return issues;
+}
+
+function companionSkillInstallStatus(root, skill) {
+  const files = (skill.files ?? []).map((file) => {
+    const outputFile = companionOutputFile(skill, file);
+    const filePath = path.join(root, outputFile);
+
+    return {
+      sourcePath: file.sourcePath,
+      destinationPath: file.destinationPath,
+      outputFile,
+      path: filePath,
+      status: installedStatus(filePath)
+    };
   });
-  const targetErrors = TARGETS.flatMap((target) => {
+  const skillPath = path.join(root, "skills", skill.name, "SKILL.md");
+  const missingFiles = files
+    .filter((file) => file.status !== "installed")
+    .map((file) => file.outputFile);
+  const status = missingFiles.length === 0
+    ? "installed"
+    : existsSync(skillPath)
+      ? "partial"
+      : "missing";
+
+  return {
+    name: skill.name,
+    status,
+    path: skillPath,
+    sourceRepo: skill.sourceRepo,
+    ref: skill.ref,
+    metadataStatus: /^[a-f0-9]{40}$/i.test(skill.ref ?? "") ? "pinned" : "review",
+    missingFiles,
+    files
+  };
+}
+
+function nativeTargetStatus(target, companionSkills) {
+  const root = resolveNativeRoot(target, { dirProvided: false });
+  const skillPath = path.join(root, "skills", "basd-coding-dispatch", "SKILL.md");
+  const cli = target === "openclaw"
+    ? commandStatus("openclaw", ["--version"], { nodeFallback: true })
+    : commandStatus("hermes", ["--version"]);
+
+  return {
+    cli,
+    root,
+    rootLabel: target === "hermes" ? "home" : "workspace",
+    skill: {
+      status: installedStatus(skillPath),
+      path: skillPath
+    },
+    companionSkills: companionSkills.map((skill) => companionSkillInstallStatus(root, skill))
+  };
+}
+
+function targetInstallOk(targetStatus) {
+  return targetStatus.skill.status === "installed"
+    && targetStatus.companionSkills.every((skill) => skill.status === "installed");
+}
+
+function doctorInstallOk(status) {
+  const targets = Object.values(status.targets ?? {});
+  return status.ok === true
+    && status.source.status === "ok"
+    && status.companionManifest.status === "ok"
+    && targets.length > 0
+    && targets.every((target) => targetInstallOk(target));
+}
+
+function validationOutputToErrors(chunks) {
+  return chunks
+    .join("")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^-\s*/, "").trim())
+    .filter(Boolean);
+}
+
+function targetSourceErrors() {
+  return TARGETS.flatMap((target) => {
     if (NATIVE_SKILL_TARGETS.has(target)) {
       return [];
     }
@@ -674,47 +780,148 @@ async function doctor() {
       .filter((file) => !REQUIRED_SOURCE_FILES.includes(file))
       .map((file) => `target ${target} references unknown source file ${file}`);
   });
+}
 
-  const hasSourceErrors = validationStatus !== 0 || targetErrors.length > 0;
-
-  process.stdout.write(`source: ${hasSourceErrors ? "failed" : "ok"}\n`);
-
-  if (hasSourceErrors) {
-    process.stderr.write(validationErrors.join(""));
-    for (const error of targetErrors) {
-      process.stderr.write(`${error}\n`);
+async function buildDoctorStatus() {
+  const validationChunks = [];
+  const validationStatus = await runValidation({
+    rootDir: packageRoot,
+    stdout: { write: () => true },
+    stderr: {
+      write: (chunk) => {
+        validationChunks.push(String(chunk));
+        return true;
+      }
     }
+  });
+  const errors = [
+    ...validationOutputToErrors(validationChunks),
+    ...targetSourceErrors()
+  ];
+  const source = {
+    status: validationStatus === 0 && errors.length === 0 ? "ok" : "failed",
+    errors
+  };
+  const status = {
+    ok: source.status === "ok",
+    installOk: false,
+    source,
+    companionManifest: {
+      status: "not-checked",
+      file: companionManifestFile,
+      defaultSkillCount: 0,
+      metadataStatus: "not-checked",
+      metadataIssues: []
+    },
+    targets: {}
+  };
+
+  if (source.status !== "ok") {
+    return status;
+  }
+
+  try {
+    const companionManifest = await loadCompanionSkillManifest();
+    const companionSkills = defaultCompanionSkills(companionManifest);
+    const metadataIssues = companionMetadataIssues(companionManifest);
+
+    status.companionManifest = {
+      status: "ok",
+      file: companionManifestFile,
+      defaultSkillCount: companionSkills.length,
+      metadataStatus: metadataIssues.length === 0 ? "ok" : "review",
+      metadataIssues
+    };
+    status.targets = {
+      hermes: nativeTargetStatus("hermes", companionSkills),
+      openclaw: nativeTargetStatus("openclaw", companionSkills)
+    };
+    status.installOk = doctorInstallOk(status);
+  } catch (error) {
+    status.ok = false;
+    status.companionManifest = {
+      status: "failed",
+      file: companionManifestFile,
+      defaultSkillCount: 0,
+      metadataStatus: "not-checked",
+      metadataIssues: [],
+      errors: [error.message]
+    };
+  }
+
+  return status;
+}
+
+function renderCompanionInstallStatus(label, skills) {
+  process.stdout.write(`${label} companion skills:\n`);
+  for (const skill of skills) {
+    process.stdout.write(`  ${skill.name}: ${skill.status} at ${skill.path}\n`);
+    if (skill.missingFiles.length > 0) {
+      process.stdout.write(`    missing files: ${skill.missingFiles.join(", ")}\n`);
+    }
+  }
+}
+
+function renderDoctorText(status) {
+  process.stdout.write(`source: ${status.source.status}\n`);
+
+  if (status.source.status !== "ok") {
+    for (const error of status.source.errors) {
+      process.stderr.write(`- ${error}\n`);
+    }
+    return;
+  }
+
+  if (status.companionManifest.status !== "ok") {
+    process.stdout.write(`companion manifest: ${status.companionManifest.status}\n`);
+    for (const error of status.companionManifest.errors ?? []) {
+      process.stderr.write(`- ${error}\n`);
+    }
+    return;
+  }
+
+  process.stdout.write(
+    `companion manifest: ok (${status.companionManifest.defaultSkillCount} default skills at ${status.companionManifest.file})\n`
+  );
+  process.stdout.write(`hermes cli: ${status.targets.hermes.cli}\n`);
+  process.stdout.write(`hermes home: ${status.targets.hermes.root}\n`);
+  process.stdout.write(
+    `hermes skill: ${status.targets.hermes.skill.status} at ${status.targets.hermes.skill.path}\n`
+  );
+  renderCompanionInstallStatus("hermes", status.targets.hermes.companionSkills);
+  process.stdout.write(`openclaw cli: ${status.targets.openclaw.cli}\n`);
+  process.stdout.write(`openclaw workspace: ${status.targets.openclaw.root}\n`);
+  process.stdout.write(
+    `openclaw skill: ${status.targets.openclaw.skill.status} at ${status.targets.openclaw.skill.path}\n`
+  );
+  renderCompanionInstallStatus("openclaw", status.targets.openclaw.companionSkills);
+  process.stdout.write("Doctor passed\n");
+}
+
+async function doctor(args = []) {
+  let options;
+  try {
+    options = parseDoctorArgs(args);
+  } catch (error) {
+    process.stderr.write(`${error.message}\n\n`);
+    printHelp(process.stderr);
     return 1;
   }
 
-  const companionManifest = await loadCompanionSkillManifest();
-  const companionSkills = defaultCompanionSkills(companionManifest);
-  const hermesRoot = resolveNativeRoot("hermes", { dirProvided: false });
-  const openclawRoot = resolveNativeRoot("openclaw", { dirProvided: false });
+  if (options.help) {
+    printHelp();
+    return 0;
+  }
 
-  process.stdout.write(
-    `companion manifest: ok (${companionSkills.length} default skills at ${companionManifestFile})\n`
-  );
-  process.stdout.write(`hermes cli: ${commandStatus("hermes", ["--version"])}\n`);
-  printInstallStatus(
-    "hermes",
-    hermesRoot,
-    path.join(hermesRoot, "skills", "basd-coding-dispatch", "SKILL.md"),
-    "home"
-  );
-  printCompanionInstallStatus("hermes", hermesRoot, companionSkills);
-  process.stdout.write(`openclaw cli: ${commandStatus("openclaw", ["--version"], { nodeFallback: true })}\n`);
-  process.stdout.write(`openclaw workspace: ${openclawRoot}\n`);
-  process.stdout.write(
-    `openclaw skill: ${
-      existsSync(path.join(openclawRoot, "skills", "basd-coding-dispatch", "SKILL.md"))
-        ? "installed"
-        : "missing"
-    } at ${path.join(openclawRoot, "skills", "basd-coding-dispatch", "SKILL.md")}\n`
-  );
-  printCompanionInstallStatus("openclaw", openclawRoot, companionSkills);
-  process.stdout.write("Doctor passed\n");
-  return 0;
+  const status = await buildDoctorStatus();
+
+  if (options.json) {
+    process.stdout.write(`${JSON.stringify(status, null, 2)}\n`);
+  } else {
+    renderDoctorText(status);
+  }
+
+  return status.ok ? 0 : 1;
 }
 
 function validate() {
@@ -734,7 +941,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   if (command === "doctor") {
-    return doctor();
+    return doctor(args);
   }
 
   if (command === "validate") {

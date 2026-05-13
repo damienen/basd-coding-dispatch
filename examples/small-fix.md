@@ -1,6 +1,6 @@
 # Small Fix Example
 
-Reference files: `references/quality-gates.md`, `references/provider-command-recipes.md`
+Reference files: `references/quality-gates.md`, `references/quality-profiles.md`, `references/review-packets.md`, `references/provider-command-recipes.md`
 
 ## Request
 
@@ -8,11 +8,11 @@ The CLI exits zero for an unknown command. Make unknown commands print help and 
 
 ## Classification
 
-Small fix. User-visible CLI behavior. No spec gate needed beyond the stated behavior.
+Small fix using the `tiny-fix` quality profile. User-visible CLI behavior. No spec gate needed beyond the stated behavior.
 
 ## Worker Routing
 
-Codex implements. Independent review is lightweight because the change is small but touches CLI behavior.
+Codex implements. Independent review is lightweight because tiny fixes still get a separate reviewer check.
 
 ## Implementation Plan
 
@@ -24,6 +24,8 @@ Codex implements. Independent review is lightweight because the change is small 
 ## Review
 
 Reviewer checks that known commands still work, unknown commands fail, and help text remains accurate.
+
+Review packet includes `git status --short --branch`, the focused diff, untracked files if any, and the smoke-test output.
 
 ## Verification
 

@@ -1,6 +1,6 @@
 # Dual Worker Review Example
 
-Reference files: `references/review-orchestration.md`, `references/session-topology.md`
+Reference files: `references/review-orchestration.md`, `references/review-packets.md`, `references/session-topology.md`
 
 ## Request
 
@@ -28,15 +28,27 @@ Do not create a release.
 
 ```text
 Review the workflow for unsafe publish behavior, fake release claims, missing checks, and credential exposure.
-Findings first. Include file and line references when possible.
+Findings first. Include file and line references when possible. Use this markdown/YAML format when practical:
+
+verdict: APPROVE | REQUEST_CHANGES
+risk: risky
+findings:
+  - id: R1
+    severity: blocker | high | medium | low | bonus
+    category: correctness | edge-case | tests | security | maintainability | scope | docs
+    file: path or n/a
+    evidence: short concrete evidence
+    recommendation: short fix or backlog note
+    disposition: must-fix-now | ask-human | bonus-backlog | reject-if-wrong
 ```
 
 ## Dispatcher Reconciliation
 
-The dispatcher accepts concrete findings, rejects out-of-scope suggestions, applies fixes, and reruns:
+The dispatcher accepts concrete findings, rejects incorrect findings with evidence, preserves valid out-of-scope bonus findings as backlog/input, applies narrow in-scope fixes, and reruns:
 
 ```bash
 npm run validate
 npm run smoke-test
+npm run workflow-evals
 npm pack --dry-run
 ```

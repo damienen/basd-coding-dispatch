@@ -23,6 +23,12 @@ const manualAdapterTargets = [
 
 const skillReferenceFiles = [
   "quality-gates.md",
+  "quality-profiles.md",
+  "edge-case-packs.md",
+  "review-packets.md",
+  "superpowers-integration.md",
+  "prompt-templates.md",
+  "plan-linter.md",
   "provider-command-recipes.md",
   "session-topology.md",
   "review-orchestration.md",
@@ -181,6 +187,18 @@ function assertMissingCompanionSkills(root, label) {
   }
 }
 
+function expectedDoctorInstallOk(status) {
+  const targets = Object.values(status.targets ?? {});
+  return status.ok === true
+    && status.source?.status === "ok"
+    && status.companionManifest?.status === "ok"
+    && targets.length > 0
+    && targets.every((target) => {
+      return target.skill?.status === "installed"
+        && target.companionSkills.every((skill) => skill.status === "installed");
+    });
+}
+
 async function writeFixtureFiles(root) {
   for (const file of fixtureFiles) {
     const fixturePath = path.join(root, file.repo, file.path);
@@ -235,27 +253,58 @@ try {
   assert.match(help.stdout, /openclaw/);
   assert.match(help.stdout, /--skip-companion-skills/);
   assert.match(help.stdout, /--no-companion-skills/);
+  assert.match(help.stdout, /doctor --json/);
 
   const unknown = await run(["missing-command"]);
   assertFailure(unknown, "unknown command");
   assert.match(unknown.combined, /Unknown command/);
   assert.match(unknown.combined, /basd-coding-dispatch help/);
 
-  const doctor = await run(["doctor"]);
-  assertSuccess(doctor, "doctor");
-  assert.match(doctor.stdout, /source: ok/);
-  assert.match(doctor.stdout, /companion manifest: ok/);
-  assert.match(doctor.stdout, /hermes cli:/);
-  assert.match(doctor.stdout, /hermes home:/);
-  assert.doesNotMatch(doctor.stdout, /hermes root:/);
-  assert.match(doctor.stdout, /hermes companion skills:/);
-  assert.match(doctor.stdout, /openclaw cli:/);
-  assert.match(doctor.stdout, /openclaw workspace:/);
-  assert.match(doctor.stdout, /openclaw companion skills:/);
-  assert.match(doctor.stdout, /Doctor passed/);
-
+  const originalHermesHomeForDoctor = process.env.HERMES_HOME;
+  const originalOpenClawWorkspaceForDoctor = process.env.OPENCLAW_WORKSPACE;
   const originalPathForDoctor = process.env.PATH;
   try {
+    process.env.HERMES_HOME = path.join(scratch, "doctor-hermes-home");
+    process.env.OPENCLAW_WORKSPACE = path.join(scratch, "doctor-openclaw-workspace");
+
+    const doctor = await run(["doctor"]);
+    assertSuccess(doctor, "doctor");
+    assert.match(doctor.stdout, /source: ok/);
+    assert.match(doctor.stdout, /companion manifest: ok/);
+    assert.match(doctor.stdout, /hermes cli:/);
+    assert.match(doctor.stdout, /hermes home:/);
+    assert.doesNotMatch(doctor.stdout, /hermes root:/);
+    assert.match(doctor.stdout, /hermes companion skills:/);
+    assert.match(doctor.stdout, /missing files: skills\/codex\/SKILL\.md/);
+    assert.match(doctor.stdout, /openclaw cli:/);
+    assert.match(doctor.stdout, /openclaw workspace:/);
+    assert.match(doctor.stdout, /openclaw companion skills:/);
+    assert.match(doctor.stdout, /Doctor passed/);
+
+    const doctorJson = await run(["doctor", "--json"]);
+    assertSuccess(doctorJson, "doctor --json");
+    assert.equal(doctorJson.stderr, "");
+    const parsedDoctor = JSON.parse(doctorJson.stdout);
+    assert.equal(parsedDoctor.ok, true, "doctor --json preserves source/package ok semantics");
+    assert.equal(parsedDoctor.source.status, "ok");
+    assert.equal(parsedDoctor.companionManifest.status, "ok");
+    assert.equal(typeof parsedDoctor.installOk, "boolean", "doctor --json includes installOk");
+    assert.equal(
+      parsedDoctor.installOk,
+      expectedDoctorInstallOk(parsedDoctor),
+      "doctor --json installOk reflects source, manifest, native skill, and companion skill install health"
+    );
+    assert.ok(parsedDoctor.targets.hermes.skill.path, "doctor --json includes Hermes skill path");
+    assert.ok(parsedDoctor.targets.openclaw.skill.path, "doctor --json includes OpenClaw skill path");
+    assert.ok(
+      Array.isArray(parsedDoctor.targets.hermes.companionSkills),
+      "doctor --json includes Hermes companion skill statuses"
+    );
+    assert.ok(
+      parsedDoctor.targets.hermes.companionSkills.every((skill) => Array.isArray(skill.missingFiles)),
+      "doctor --json includes missing companion file drift status"
+    );
+
     const fakeBin = path.join(scratch, "fake-bin");
     await mkdir(path.join(fakeBin, "hermes"), { recursive: true });
     await mkdir(path.join(fakeBin, "openclaw"), { recursive: true });
@@ -268,6 +317,18 @@ try {
     assert.match(weirdDoctor.stdout, /openclaw cli: error \(/);
     assert.doesNotMatch(weirdDoctor.stdout, /openclaw cli: present \(/);
   } finally {
+    if (originalHermesHomeForDoctor === undefined) {
+      delete process.env.HERMES_HOME;
+    } else {
+      process.env.HERMES_HOME = originalHermesHomeForDoctor;
+    }
+
+    if (originalOpenClawWorkspaceForDoctor === undefined) {
+      delete process.env.OPENCLAW_WORKSPACE;
+    } else {
+      process.env.OPENCLAW_WORKSPACE = originalOpenClawWorkspaceForDoctor;
+    }
+
     if (originalPathForDoctor === undefined) {
       delete process.env.PATH;
     } else {

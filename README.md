@@ -69,6 +69,7 @@ Inspect local install status:
 
 ```bash
 npx basd-coding-dispatch doctor
+npx basd-coding-dispatch doctor --json
 npx basd-coding-dispatch validate
 ```
 
@@ -79,6 +80,8 @@ Hermes and OpenClaw targets install `skills/basd-coding-dispatch/` as a self-con
 Existing companion skills are skipped unless `--force` is provided. Existing core `basd-coding-dispatch` files still block the install unless `--force` is provided. Use `--skip-companion-skills` or `--no-companion-skills` for the offline/core-only path.
 
 Manual adapter targets write process docs and skill/reference files into a project. They do not fetch or install companion skills.
+
+`doctor --json` returns machine-readable source validation, companion manifest, native skill, companion skill, and lightweight install drift status for local automation. The top-level `ok` field preserves source/package health semantics; `installOk` is the aggregate local install-health field across source, companion manifest, native targets, and companion skills.
 
 ## What this does not install/configure
 
@@ -103,14 +106,30 @@ Hermes is the flagship install path for v0.1. OpenClaw support is based on the v
 ## Quality Gates
 
 - Classify the request before choosing a worker-routing shape.
+- Select one of the quality profiles (`tiny-fix`, `standard-feature`, `risky-release`, `mobile-ui`, `backend-api`, `cli-package`, or `public-docs`) and auto-escalate gates when the work reveals more risk.
 - Produce a spec gate for ambiguous work.
 - Produce an implementation-plan gate before feature code.
+- Run the human plan-lint checklist for feature, risky, public, cross-module, or ambiguous work.
 - Keep worker-routing mechanics in `references/` and `integrations/`, not in the portable skill body.
-- Use independent review for meaningful implementation work.
+- Use lightweight independent review for tiny fixes and fuller independent review for meaningful implementation work.
+- Include untracked files and verification output in reviewer packets.
+- Preserve valid bonus findings as backlog/input instead of discarding them.
+- Record Superpowers evidence when those skills are used, or state the compensation gates when a required skill/reference is unavailable.
 - Verify with concrete commands, transcripts, examples, or screenshots before reporting done.
 - Keep public repo files free of private paths, credentials, private client data, and unvalidated provider metadata.
+- A2 run manifest / gate ledger is intentionally not introduced as a v0.1 requirement.
 
-See `skills/basd-coding-dispatch/references/quality-gates.md` for the installed skill reference and `references/quality-gates.md` for repo browsing.
+See `skills/basd-coding-dispatch/references/quality-gates.md` for the installed skill reference and `references/quality-gates.md` for repo browsing. Use `references/quality-profiles.md`, `references/edge-case-packs.md`, `references/review-packets.md`, `references/superpowers-integration.md`, `references/plan-linter.md`, and `references/prompt-templates.md` for the detailed quality workflow.
+
+## Workflow Evals
+
+The deterministic workflow evals assert process guarantees without calling an LLM:
+
+```bash
+npm run workflow-evals
+```
+
+They check that quality profiles require review, ambiguous features use a spec gate before planning, reviewer packets include untracked files, reviewer output is markdown/YAML rather than strict JSON-only, bonus findings go to backlog/input, Superpowers evidence or compensation is required, and A2 is not introduced as a required artifact.
 
 ## Examples
 
@@ -124,6 +143,7 @@ See `skills/basd-coding-dispatch/references/quality-gates.md` for the installed 
 - `skills/basd-coding-dispatch/SKILL.md`: lean public skill for Hermes, OpenClaw, and agents that support skill-style workflows.
 - `skills/basd-coding-dispatch/references/`: reference files included with native skill installs.
 - `references/`: repo-level copies of the process references for browsing.
+- `scripts/workflow-evals.mjs`: deterministic checks for workflow guarantees.
 - `integrations/`: install/adaptation notes for supported targets.
 - `AGENTS.md` and `CLAUDE.md`: strict anti-slop governance files.
 - `.github/`: issue templates, PR template, CI workflow, and safe release workflow skeleton.

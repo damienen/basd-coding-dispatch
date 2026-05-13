@@ -32,5 +32,8 @@ jobs:
       - name: Smoke test
         run: npm run smoke-test
 
+      - name: Workflow evals
+        run: npm run workflow-evals
+
       - name: Pack dry run
         run: npm pack --dry-run

@@ -25,15 +25,28 @@ const requiredFiles = [
   "bin/basd-coding-dispatch.mjs",
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
+  "scripts/workflow-evals.mjs",
   companionManifestFile,
   "skills/basd-coding-dispatch/SKILL.md",
   "skills/basd-coding-dispatch/references/README.md",
   "skills/basd-coding-dispatch/references/quality-gates.md",
+  "skills/basd-coding-dispatch/references/quality-profiles.md",
+  "skills/basd-coding-dispatch/references/edge-case-packs.md",
+  "skills/basd-coding-dispatch/references/review-packets.md",
+  "skills/basd-coding-dispatch/references/superpowers-integration.md",
+  "skills/basd-coding-dispatch/references/prompt-templates.md",
+  "skills/basd-coding-dispatch/references/plan-linter.md",
   "skills/basd-coding-dispatch/references/provider-command-recipes.md",
   "skills/basd-coding-dispatch/references/session-topology.md",
   "skills/basd-coding-dispatch/references/review-orchestration.md",
   "skills/basd-coding-dispatch/references/subagent-skill-bundles.md",
   "references/quality-gates.md",
+  "references/quality-profiles.md",
+  "references/edge-case-packs.md",
+  "references/review-packets.md",
+  "references/superpowers-integration.md",
+  "references/prompt-templates.md",
+  "references/plan-linter.md",
   "references/provider-command-recipes.md",
   "references/session-topology.md",
   "references/review-orchestration.md",
@@ -126,6 +139,12 @@ const integrationDocs = [
 
 const skillReferenceFiles = [
   "quality-gates.md",
+  "quality-profiles.md",
+  "edge-case-packs.md",
+  "review-packets.md",
+  "superpowers-integration.md",
+  "prompt-templates.md",
+  "plan-linter.md",
   "provider-command-recipes.md",
   "session-topology.md",
   "review-orchestration.md",
@@ -241,6 +260,10 @@ async function validatePackageJson() {
     addError("package.json scripts.smoke-test must run node scripts/smoke-test.mjs");
   }
 
+  if (packageJson.scripts?.["workflow-evals"] !== "node scripts/workflow-evals.mjs") {
+    addError("package.json scripts.workflow-evals must run node scripts/workflow-evals.mjs");
+  }
+
   if (!packageJson.description?.includes("Hermes/OpenClaw")) {
     addError("package.json description must lead with Hermes/OpenClaw positioning");
   }
@@ -304,6 +327,24 @@ async function validateSkillReferences() {
   for (const file of skillReferenceFiles) {
     if (!referenceReadme.includes(file)) {
       addError(`skills/basd-coding-dispatch/references/README.md should mention ${file}`);
+    }
+  }
+}
+
+async function validateReferenceMirrors() {
+  for (const file of skillReferenceFiles) {
+    const skillLocalPath = `skills/basd-coding-dispatch/references/${file}`;
+    const rootPath = `references/${file}`;
+
+    if (!existsSync(path.join(repoRoot, skillLocalPath)) || !existsSync(path.join(repoRoot, rootPath))) {
+      continue;
+    }
+
+    const skillLocalContent = await readFile(path.join(repoRoot, skillLocalPath), "utf8");
+    const rootContent = await readFile(path.join(repoRoot, rootPath), "utf8");
+
+    if (skillLocalContent !== rootContent) {
+      addError(`${rootPath} must be byte-identical to ${skillLocalPath}`);
     }
   }
 }
@@ -542,7 +583,12 @@ async function validateReadme() {
     "Claude",
     "OpenClaw",
     "Hermes is the maintained home",
-    "quality gates"
+    "quality gates",
+    "quality profiles",
+    "doctor --json",
+    "workflow-evals",
+    "Superpowers evidence",
+    "compensation"
   ]) {
     if (!content.includes(requiredText)) {
       addError(`README.md must include ${requiredText}`);
@@ -653,6 +699,7 @@ export async function runValidation(options = {}) {
   await validatePackageJson();
   await validateSkillFrontmatter();
   await validateSkillReferences();
+  await validateReferenceMirrors();
   await validateCompanionManifest();
   await validateLeakageScan();
   await validateExampleReferences();

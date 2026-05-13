@@ -28,8 +28,18 @@ Codex and Claude are supported worker backends. Their native harness adapters re
 npm ci
 npm run validate
 npm run smoke-test
+npm run workflow-evals
 npm pack --dry-run
 ```
+
+## Inspect Install Health
+
+```bash
+npx basd-coding-dispatch doctor
+npx basd-coding-dispatch doctor --json
+```
+
+Use JSON output for automated checks that need source validation status, companion manifest status, native skill presence, companion skill drift details, and the top-level `installOk` aggregate.
 
 ## Dispatch Prompt Shape
 

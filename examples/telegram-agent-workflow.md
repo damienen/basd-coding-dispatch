@@ -1,6 +1,6 @@
 # Telegram To Hermes Workflow Example
 
-Reference files: `skills/basd-coding-dispatch/references/quality-gates.md`, `integrations/hermes/install.md`
+Reference files: `skills/basd-coding-dispatch/references/quality-gates.md`, `skills/basd-coding-dispatch/references/superpowers-integration.md`, `skills/basd-coding-dispatch/references/prompt-templates.md`, `integrations/hermes/install.md`
 
 This is the flagship v0.1 loop: the human stays on a phone, Telegram sends the request to a Hermes gateway, Hermes loads `basd-coding-dispatch`, and worker backends do the coding only after the gates are satisfied.
 
@@ -47,6 +47,35 @@ Verification:
 
 Remaining risk:
 - Cursor, OpenCode, and native Codex/Claude harness adapters remain experimental/manual until their install paths are validated.
+```
+
+## Superpowers Evidence Or Compensation
+
+```text
+Superpowers evidence:
+- using-superpowers loaded before work.
+- implementation-plan gate followed.
+- independent review requested with a packet that included untracked files.
+- verification-before-completion satisfied with fresh command output.
+
+Compensation if a required skill/reference is missing:
+- state the missing skill/reference.
+- use the public quality profile and edge-case pack.
+- use independent review and final verification before reporting completion.
+```
+
+## Final Verification Report
+
+```text
+Profile:
+Provider/split:
+Files changed:
+Commands and exit statuses:
+Independent review verdict:
+Fixed findings:
+Skipped checks:
+Remaining risks:
+No push/publish/PR/deploy status:
 ```
 
 ## Why This Works From A Phone

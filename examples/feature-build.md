@@ -1,6 +1,6 @@
 # Feature Build Example
 
-Reference files: `references/quality-gates.md`, `references/session-topology.md`
+Reference files: `references/quality-gates.md`, `references/quality-profiles.md`, `references/edge-case-packs.md`, `references/plan-linter.md`, `references/session-topology.md`
 
 ## Request
 
@@ -8,7 +8,7 @@ Add a new worker adapter target for a coding harness.
 
 ## Classification
 
-Feature build. It changes installer behavior, docs, validation, examples, and public claims.
+Feature build using the `cli-package` quality profile and CLI/tooling/package edge-case pack. It changes installer behavior, docs, validation, examples, and public claims.
 
 ## Spec Gate
 
@@ -34,10 +34,12 @@ Files:
 
 Steps:
 1. Add failing smoke-test coverage for the new target.
-2. Add the target to CLI target maps.
-3. Add validation coverage for the integration doc.
-4. Add install docs with an honest status label.
-5. Run npm run validate, npm run smoke-test, npm pack --dry-run.
+2. Run the plan linter and confirm exact files, expected RED failure, edge-case pack, review packet, rollback, and verification commands are named.
+3. Add the target to CLI target maps.
+4. Add validation coverage for the integration doc.
+5. Add install docs with an honest status label.
+6. Escalate tests if package files, force/overwrite behavior, JSON/text output, or public support claims change.
+7. Run npm run validate, npm run smoke-test, npm run workflow-evals, npm pack --dry-run.
 ```
 
 No feature code is written before the implementation plan is accepted.
@@ -47,5 +49,6 @@ No feature code is written before the implementation plan is accepted.
 ```bash
 npm run validate
 npm run smoke-test
+npm run workflow-evals
 npm pack --dry-run
 ```

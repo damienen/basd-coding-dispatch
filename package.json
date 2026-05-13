@@ -16,7 +16,8 @@
   },
   "scripts": {
     "validate": "node scripts/validate.mjs",
-    "smoke-test": "node scripts/smoke-test.mjs"
+    "smoke-test": "node scripts/smoke-test.mjs",
+    "workflow-evals": "node scripts/workflow-evals.mjs"
   },
   "files": [
     ".github",

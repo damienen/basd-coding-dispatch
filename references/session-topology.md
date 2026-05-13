@@ -19,6 +19,7 @@ Use one worker for narrow tasks:
 - Single-file cleanup.
 
 The worker still runs classification, planning, verification, and reporting.
+Tiny fixes still get lightweight independent review before completion is reported.
 
 ## Implementer Plus Reviewer
 
@@ -38,6 +39,7 @@ Use a dispatcher when the work has parallel tracks:
 - A reviewer can run while implementation continues on a disjoint area.
 
 The dispatcher owns final integration and verification.
+Use `references/subagent-skill-bundles.md` and `references/review-packets.md` to keep ownership and review evidence clear.
 
 ## Mobile Control
 
