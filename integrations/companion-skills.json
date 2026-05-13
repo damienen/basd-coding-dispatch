@@ -50,6 +50,21 @@
           "sourcePath": "skills/using-superpowers/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-superpowers/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/using-superpowers/references/codex-tools.md",
+          "destinationPath": "references/codex-tools.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-superpowers/references/codex-tools.md"
+        },
+        {
+          "sourcePath": "skills/using-superpowers/references/copilot-tools.md",
+          "destinationPath": "references/copilot-tools.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-superpowers/references/copilot-tools.md"
+        },
+        {
+          "sourcePath": "skills/using-superpowers/references/gemini-tools.md",
+          "destinationPath": "references/gemini-tools.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-superpowers/references/gemini-tools.md"
         }
       ]
     },
@@ -67,6 +82,43 @@
           "sourcePath": "skills/brainstorming/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/brainstorming/scripts/frame-template.html",
+          "destinationPath": "scripts/frame-template.html",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/scripts/frame-template.html"
+        },
+        {
+          "sourcePath": "skills/brainstorming/scripts/helper.js",
+          "destinationPath": "scripts/helper.js",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/scripts/helper.js"
+        },
+        {
+          "sourcePath": "skills/brainstorming/scripts/server.cjs",
+          "destinationPath": "scripts/server.cjs",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/scripts/server.cjs"
+        },
+        {
+          "sourcePath": "skills/brainstorming/scripts/start-server.sh",
+          "destinationPath": "scripts/start-server.sh",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/scripts/start-server.sh",
+          "mode": "755"
+        },
+        {
+          "sourcePath": "skills/brainstorming/scripts/stop-server.sh",
+          "destinationPath": "scripts/stop-server.sh",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/scripts/stop-server.sh",
+          "mode": "755"
+        },
+        {
+          "sourcePath": "skills/brainstorming/spec-document-reviewer-prompt.md",
+          "destinationPath": "spec-document-reviewer-prompt.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/spec-document-reviewer-prompt.md"
+        },
+        {
+          "sourcePath": "skills/brainstorming/visual-companion.md",
+          "destinationPath": "visual-companion.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/brainstorming/visual-companion.md"
         }
       ]
     },
@@ -84,6 +136,45 @@
           "sourcePath": "skills/writing-plans/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-plans/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/writing-plans/plan-document-reviewer-prompt.md",
+          "destinationPath": "plan-document-reviewer-prompt.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-plans/plan-document-reviewer-prompt.md"
+        }
+      ]
+    },
+    {
+      "name": "using-git-worktrees",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/using-git-worktrees",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/using-git-worktrees/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/using-git-worktrees/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "executing-plans",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/executing-plans",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/executing-plans/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/executing-plans/SKILL.md"
         }
       ]
     },
@@ -120,6 +211,23 @@
       ]
     },
     {
+      "name": "dispatching-parallel-agents",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/dispatching-parallel-agents",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/dispatching-parallel-agents/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/dispatching-parallel-agents/SKILL.md"
+        }
+      ]
+    },
+    {
       "name": "requesting-code-review",
       "sourceRepo": "obra/superpowers",
       "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
@@ -133,6 +241,28 @@
           "sourcePath": "skills/requesting-code-review/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/requesting-code-review/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/requesting-code-review/code-reviewer.md",
+          "destinationPath": "code-reviewer.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/requesting-code-review/code-reviewer.md"
+        }
+      ]
+    },
+    {
+      "name": "receiving-code-review",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/receiving-code-review",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/receiving-code-review/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/receiving-code-review/SKILL.md"
         }
       ]
     },
@@ -154,6 +284,23 @@
       ]
     },
     {
+      "name": "finishing-a-development-branch",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/finishing-a-development-branch",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/finishing-a-development-branch/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/finishing-a-development-branch/SKILL.md"
+        }
+      ]
+    },
+    {
       "name": "test-driven-development",
       "sourceRepo": "obra/superpowers",
       "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
@@ -167,6 +314,11 @@
           "sourcePath": "skills/test-driven-development/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/test-driven-development/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/test-driven-development/testing-anti-patterns.md",
+          "destinationPath": "testing-anti-patterns.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/test-driven-development/testing-anti-patterns.md"
         }
       ]
     },
@@ -184,6 +336,105 @@
           "sourcePath": "skills/systematic-debugging/SKILL.md",
           "destinationPath": "SKILL.md",
           "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/CREATION-LOG.md",
+          "destinationPath": "CREATION-LOG.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/CREATION-LOG.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/condition-based-waiting-example.ts",
+          "destinationPath": "condition-based-waiting-example.ts",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/condition-based-waiting-example.ts"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/condition-based-waiting.md",
+          "destinationPath": "condition-based-waiting.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/condition-based-waiting.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/defense-in-depth.md",
+          "destinationPath": "defense-in-depth.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/defense-in-depth.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/find-polluter.sh",
+          "destinationPath": "find-polluter.sh",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/find-polluter.sh",
+          "mode": "755"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/root-cause-tracing.md",
+          "destinationPath": "root-cause-tracing.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/root-cause-tracing.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/test-academic.md",
+          "destinationPath": "test-academic.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/test-academic.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/test-pressure-1.md",
+          "destinationPath": "test-pressure-1.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/test-pressure-1.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/test-pressure-2.md",
+          "destinationPath": "test-pressure-2.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/test-pressure-2.md"
+        },
+        {
+          "sourcePath": "skills/systematic-debugging/test-pressure-3.md",
+          "destinationPath": "test-pressure-3.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/systematic-debugging/test-pressure-3.md"
+        }
+      ]
+    },
+    {
+      "name": "writing-skills",
+      "sourceRepo": "obra/superpowers",
+      "ref": "f2cbfbefebbfef77321e4c9abc9e949826bea9d7",
+      "sourceDirectory": "skills/writing-skills",
+      "installByDefault": true,
+      "license": "MIT",
+      "licenseNotes": "Upstream repository declares MIT.",
+      "updateNotes": "Pinned to a verified main commit. Revalidate raw URLs before changing this ref.",
+      "files": [
+        {
+          "sourcePath": "skills/writing-skills/SKILL.md",
+          "destinationPath": "SKILL.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/SKILL.md"
+        },
+        {
+          "sourcePath": "skills/writing-skills/anthropic-best-practices.md",
+          "destinationPath": "anthropic-best-practices.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/anthropic-best-practices.md"
+        },
+        {
+          "sourcePath": "skills/writing-skills/examples/CLAUDE_MD_TESTING.md",
+          "destinationPath": "examples/CLAUDE_MD_TESTING.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/examples/CLAUDE_MD_TESTING.md"
+        },
+        {
+          "sourcePath": "skills/writing-skills/graphviz-conventions.dot",
+          "destinationPath": "graphviz-conventions.dot",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/graphviz-conventions.dot"
+        },
+        {
+          "sourcePath": "skills/writing-skills/persuasion-principles.md",
+          "destinationPath": "persuasion-principles.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/persuasion-principles.md"
+        },
+        {
+          "sourcePath": "skills/writing-skills/render-graphs.js",
+          "destinationPath": "render-graphs.js",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/render-graphs.js",
+          "mode": "755"
+        },
+        {
+          "sourcePath": "skills/writing-skills/testing-skills-with-subagents.md",
+          "destinationPath": "testing-skills-with-subagents.md",
+          "rawUrl": "https://raw.githubusercontent.com/obra/superpowers/f2cbfbefebbfef77321e4c9abc9e949826bea9d7/skills/writing-skills/testing-skills-with-subagents.md"
         }
       ]
     }

@@ -2,12 +2,18 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { main } from "../bin/basd-coding-dispatch.mjs";
+import {
+  expectedDestinationPathForSuperpowersSource,
+  expectedSuperpowersExecutableSourceFiles,
+  expectedSuperpowersCompanionSkills,
+  expectedSuperpowersCompanionSourceFiles
+} from "./companion-support-files.mjs";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(packageRoot, "bin", "basd-coding-dispatch.mjs");
@@ -38,21 +44,37 @@ const skillReferenceFiles = [
 const companionSkillNames = [
   "codex",
   "claude-code",
-  "using-superpowers",
-  "brainstorming",
-  "writing-plans",
-  "subagent-driven-development",
-  "requesting-code-review",
-  "verification-before-completion",
-  "test-driven-development",
-  "systematic-debugging"
+  ...expectedSuperpowersCompanionSkills
 ];
 
-const subagentDrivenDevelopmentPromptFiles = [
-  "implementer-prompt.md",
-  "spec-reviewer-prompt.md",
-  "code-quality-reviewer-prompt.md"
-];
+const companionSkillFileExpectations = new Map([
+  ["codex", ["SKILL.md"]],
+  ["claude-code", ["SKILL.md"]],
+  ...Object.entries(expectedSuperpowersCompanionSourceFiles).map(([skillName, sourcePaths]) => [
+    skillName,
+    sourcePaths.map((sourcePath) => (
+      expectedDestinationPathForSuperpowersSource(skillName, sourcePath)
+    ))
+  ])
+]);
+
+const companionExecutableFileExpectations = expectedSuperpowersExecutableSourceFiles.map(
+  (sourcePath) => {
+    const skillName = sourcePath.split("/")[1];
+    return {
+      skillName,
+      file: expectedDestinationPathForSuperpowersSource(skillName, sourcePath)
+    };
+  }
+);
+
+function companionFixtureContent(skillName, sourcePath) {
+  if (sourcePath.endsWith("/SKILL.md")) {
+    return `---\nname: ${skillName}\n---\n# ${skillName} fixture\n`;
+  }
+
+  return `# ${sourcePath} fixture\n`;
+}
 
 const fixtureFiles = [
   {
@@ -65,25 +87,13 @@ const fixtureFiles = [
     path: "skills/autonomous-ai-agents/claude-code/SKILL.md",
     content: "---\nname: claude-code\n---\n# Claude Code fixture\n"
   },
-  ...[
-    "using-superpowers",
-    "brainstorming",
-    "writing-plans",
-    "subagent-driven-development",
-    "requesting-code-review",
-    "verification-before-completion",
-    "test-driven-development",
-    "systematic-debugging"
-  ].map((name) => ({
-    repo: "obra/superpowers",
-    path: `skills/${name}/SKILL.md`,
-    content: `---\nname: ${name}\n---\n# ${name} fixture\n`
-  })),
-  ...subagentDrivenDevelopmentPromptFiles.map((file) => ({
-    repo: "obra/superpowers",
-    path: `skills/subagent-driven-development/${file}`,
-    content: `# ${file} fixture\n`
-  }))
+  ...Object.entries(expectedSuperpowersCompanionSourceFiles).flatMap(([skillName, sourcePaths]) => (
+    sourcePaths.map((sourcePath) => ({
+      repo: "obra/superpowers",
+      path: sourcePath,
+      content: companionFixtureContent(skillName, sourcePath)
+    }))
+  ))
 ];
 
 function captureWrite(chunks) {
@@ -156,33 +166,35 @@ function assertInstalledSkill(root, label) {
 }
 
 function assertInstalledCompanionSkills(root, label) {
-  for (const skillName of companionSkillNames) {
-    assert.ok(
-      existsSync(path.join(root, "skills", skillName, "SKILL.md")),
-      `companion skill ${skillName} missing for ${label}`
-    );
-  }
-
-  for (const file of subagentDrivenDevelopmentPromptFiles) {
-    assert.ok(
-      existsSync(path.join(root, "skills", "subagent-driven-development", file)),
-      `subagent-driven-development prompt ${file} missing for ${label}`
-    );
+  for (const [skillName, files] of companionSkillFileExpectations) {
+    for (const file of files) {
+      assert.ok(
+        existsSync(path.join(root, "skills", skillName, file)),
+        `companion skill ${skillName} file ${file} missing for ${label}`
+      );
+    }
   }
 }
 
 function assertMissingCompanionSkills(root, label) {
-  for (const skillName of companionSkillNames) {
-    assert.ok(
-      !existsSync(path.join(root, "skills", skillName, "SKILL.md")),
-      `companion skill ${skillName} should be absent for ${label}`
-    );
+  for (const [skillName, files] of companionSkillFileExpectations) {
+    for (const file of files) {
+      assert.ok(
+        !existsSync(path.join(root, "skills", skillName, file)),
+        `companion skill ${skillName} file ${file} should be absent for ${label}`
+      );
+    }
   }
+}
 
-  for (const file of subagentDrivenDevelopmentPromptFiles) {
+async function assertInstalledCompanionExecutables(root, label) {
+  for (const { skillName, file } of companionExecutableFileExpectations) {
+    const filePath = path.join(root, "skills", skillName, file);
+    const info = await stat(filePath);
+
     assert.ok(
-      !existsSync(path.join(root, "skills", "subagent-driven-development", file)),
-      `subagent-driven-development prompt ${file} should be absent for ${label}`
+      (info.mode & 0o111) !== 0,
+      `companion skill ${skillName} file ${file} must be executable for ${label}`
     );
   }
 }
@@ -536,6 +548,7 @@ try {
   assert.match(hermesInit.stdout, /next: hermes skills list/);
   assertInstalledSkill(hermesHome, "hermes");
   assertInstalledCompanionSkills(hermesHome, "hermes");
+  await assertInstalledCompanionExecutables(hermesHome, "hermes");
   assert.ok(
     !existsSync(path.join(hermesHome, "AGENTS.md")),
     "hermes target should install only the native skill directory"
@@ -576,6 +589,7 @@ try {
   assert.match(openclawInit.stdout, /next: openclaw skills list/);
   assertInstalledSkill(openclawWorkspace, "openclaw");
   assertInstalledCompanionSkills(openclawWorkspace, "openclaw");
+  await assertInstalledCompanionExecutables(openclawWorkspace, "openclaw");
 
   const existingCompanionRoot = path.join(scratch, "existing-companion");
   const existingCodexPath = path.join(existingCompanionRoot, "skills", "codex", "SKILL.md");
@@ -594,11 +608,17 @@ try {
   assert.match(existingCompanionInit.stdout, /codex/);
   assert.equal(await readFile(existingCodexPath, "utf8"), "keep me\n");
   assertInstalledSkill(existingCompanionRoot, "existing companion root");
-  for (const skillName of companionSkillNames.filter((name) => name !== "codex")) {
-    assert.ok(
-      existsSync(path.join(existingCompanionRoot, "skills", skillName, "SKILL.md")),
-      `companion skill ${skillName} missing after existing-companion install`
-    );
+  for (const [skillName, files] of companionSkillFileExpectations) {
+    if (skillName === "codex") {
+      continue;
+    }
+
+    for (const file of files) {
+      assert.ok(
+        existsSync(path.join(existingCompanionRoot, "skills", skillName, file)),
+        `companion skill ${skillName} file ${file} missing after existing-companion install`
+      );
+    }
   }
 
   const partialCompanionRoot = path.join(scratch, "partial-companion");
@@ -644,6 +664,10 @@ try {
   assert.notEqual(await readFile(forceCodexPath, "utf8"), "replace me\n");
   assertInstalledSkill(forceCompanionRoot, "force existing companion root");
   assertInstalledCompanionSkills(forceCompanionRoot, "force existing companion root");
+  await assertInstalledCompanionExecutables(
+    forceCompanionRoot,
+    "force existing companion root"
+  );
 
   const originalHermesHome = process.env.HERMES_HOME;
   const originalOpenClawWorkspace = process.env.OPENCLAW_WORKSPACE;

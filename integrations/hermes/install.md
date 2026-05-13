@@ -4,7 +4,7 @@ Status: tested
 
 Hermes is the maintained home for v0.1. This target installs the complete `basd-coding-dispatch` skill directory into the Hermes skills directory, including `SKILL.md` and skill-local `references/` files.
 
-By default, the installer also installs pinned companion skills from `integrations/companion-skills.json` when they are missing. These include Hermes Codex/Claude Code worker guides and Superpowers process skills for planning, review, TDD, debugging, and verification. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
+By default, the installer also installs pinned companion skills from `integrations/companion-skills.json` when they are missing. These include Hermes Codex/Claude Code worker guides and complete pinned upstream directories for all 14 Superpowers process skills: activation, brainstorming, worktrees, planning, execution, parallel dispatch, review request, review intake, TDD, systematic debugging, verification, branch closeout, and skill-writing. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
 
 ## Install
 
@@ -35,7 +35,7 @@ Destination resolution:
 - `skills/basd-coding-dispatch/references/review-orchestration.md`
 - `skills/basd-coding-dispatch/references/subagent-skill-bundles.md`
 
-Default companion skills install under sibling directories such as `skills/codex/`, `skills/claude-code/`, and `skills/using-superpowers/`. Existing companion skills are skipped unless `--force` is provided.
+Default companion skills install under sibling directories such as `skills/codex/`, `skills/claude-code/`, `skills/using-superpowers/`, `skills/brainstorming/`, and `skills/finishing-a-development-branch/`. Existing companion skills are skipped unless `--force` is provided.
 
 The installer refuses to overwrite existing core `basd-coding-dispatch` skill files without `--force`.
 

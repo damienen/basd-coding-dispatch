@@ -45,6 +45,17 @@ Ask for findings first:
 - Public docs that overclaim tested behavior.
 - Private data or credential leakage.
 
+## Review Intake Gate
+
+Use `receiving-code-review` before fix loops. The dispatcher must read the full feedback, restate the technical requirement when needed, verify it against the codebase, evaluate whether it is sound for this scope, assign a disposition, and then fix only accepted in-scope findings.
+
+Disposition options:
+
+- `must-fix-now`: concrete, in-scope, and blocking enough to fix before completion.
+- `ask-human`: technically plausible but broad, ambiguous, or outside the approved plan.
+- `bonus-backlog`: valid improvement that should not block this run.
+- `reject-if-wrong`: contradicted by code, tests, constraints, or approved scope; include evidence.
+
 ## Dispatcher Reconciliation
 
 The dispatcher should:

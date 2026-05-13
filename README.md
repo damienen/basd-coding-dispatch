@@ -16,15 +16,23 @@ Telegram / mobile request
   -> Hermes gateway or OpenClaw workspace skill
   -> classify task
   -> choose worker-routing: Codex / Claude / split
+  -> Brainstorming Gate when scope is broad or risky
   -> spec gate
   -> implementation-plan gate
   -> implementation
-  -> subagent review
+  -> independent review and review intake
   -> verification
+  -> branch closeout option
   -> report
 ```
 
 ![basd-coding-dispatch workflow](assets/flow-diagram.svg)
+
+## Superpowers Phase Map
+
+`basd-coding-dispatch` integrates Superpowers phase-by-phase. `brainstorming` is a real gate before implementation planning for broad, ambiguous, user-facing, workflow, architecture, UI/design, public-doc, or public-claim work; exact low-risk tiny fixes stay lightweight and use only a micro-brainstorm when ambiguity exists.
+
+Hermes and OpenClaw installs include the complete pinned upstream directories for all 14 Superpowers skills by default as companion skills: session activation, brainstorming, worktrees, planning, execution, parallel dispatch, TDD, systematic debugging, review request, review intake, verification, branch closeout, and skill-writing. Use `--skip-companion-skills` or `--no-companion-skills` for core-only or offline installs.
 
 ## Prerequisites
 
@@ -75,7 +83,7 @@ npx basd-coding-dispatch validate
 
 ## What gets installed
 
-Hermes and OpenClaw targets install `skills/basd-coding-dispatch/` as a self-contained skill, including `SKILL.md` and skill-local `references/`. By default, they also install pinned companion skills from `integrations/companion-skills.json` when those skills are missing: Hermes Codex/Claude Code worker guides plus the Superpowers process skills used for planning, review, TDD, debugging, and verification. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
+Hermes and OpenClaw targets install `skills/basd-coding-dispatch/` as a self-contained skill, including `SKILL.md` and skill-local `references/`. By default, they also install pinned companion skills from `integrations/companion-skills.json` when those skills are missing: Hermes Codex/Claude Code worker guides plus complete upstream Superpowers skill directories used for activation, brainstorming, worktrees, planning, execution, parallel dispatch, review request, review intake, TDD, systematic debugging, verification, branch closeout, and skill-writing. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
 
 Existing companion skills are skipped unless `--force` is provided. Existing core `basd-coding-dispatch` files still block the install unless `--force` is provided. Use `--skip-companion-skills` or `--no-companion-skills` for the offline/core-only path.
 
@@ -91,7 +99,7 @@ For OpenClaw, `--dir <path>` writes to that workspace root under `<path>/skills/
 
 ## Adaptation Status
 
-Hermes is the flagship install path for v0.1. OpenClaw support is based on the verified local workspace-skill layout: `openclaw skills info aeo-geo` reports source `openclaw-workspace` and a path under `~/openclaw-workspace/skills/...`. Other harnesses remain manual or experimental adapters until their native install paths are validated.
+Hermes is the flagship install path for v0.1. OpenClaw support is based on the verified local workspace-skill layout: `openclaw skills info <skill-name>` reports source `openclaw-workspace` and a path under `~/openclaw-workspace/skills/...` for workspace-installed skills. Other harnesses remain manual or experimental adapters until their native install paths are validated.
 
 | Target | Status | Install notes |
 | --- | --- | --- |
@@ -106,16 +114,21 @@ Hermes is the flagship install path for v0.1. OpenClaw support is based on the v
 ## Quality Gates
 
 - Classify the request before choosing a worker-routing shape.
+- Declare the Superpowers Activation Map for the work shape.
 - Select one of the quality profiles (`tiny-fix`, `standard-feature`, `risky-release`, `mobile-ui`, `backend-api`, `cli-package`, or `public-docs`) and auto-escalate gates when the work reveals more risk.
 - Produce a spec gate for ambiguous work.
+- Run the Brainstorming Gate before implementation planning for broad, ambiguous, user-facing, workflow, architecture, UI/design, public-doc, or public-claim work.
 - Produce an implementation-plan gate before feature code.
 - Run the human plan-lint checklist for feature, risky, public, cross-module, or ambiguous work.
+- Use `executing-plans`, `subagent-driven-development`, or `dispatching-parallel-agents` according to task shape.
 - Keep worker-routing mechanics in `references/` and `integrations/`, not in the portable skill body.
 - Use lightweight independent review for tiny fixes and fuller independent review for meaningful implementation work.
+- Run review intake before fix loops.
 - Include untracked files and verification output in reviewer packets.
 - Preserve valid bonus findings as backlog/input instead of discarding them.
 - Record Superpowers evidence when those skills are used, or state the compensation gates when a required skill/reference is unavailable.
 - Verify with concrete commands, transcripts, examples, or screenshots before reporting done.
+- Present explicit branch closeout options and respect no-push/no-publish/no-PR branch policy unless approval is granted.
 - Keep public repo files free of private paths, credentials, private client data, and unvalidated provider metadata.
 - A2 run manifest / gate ledger is intentionally not introduced as a v0.1 requirement.
 
@@ -129,7 +142,7 @@ The deterministic workflow evals assert process guarantees without calling an LL
 npm run workflow-evals
 ```
 
-They check that quality profiles require review, ambiguous features use a spec gate before planning, reviewer packets include untracked files, reviewer output is markdown/YAML rather than strict JSON-only, bonus findings go to backlog/input, Superpowers evidence or compensation is required, and A2 is not introduced as a required artifact.
+They check that quality profiles require review, broad/ambiguous work uses a Brainstorming Gate before implementation planning, reviewer packets include untracked files, reviewer output is markdown/YAML rather than strict JSON-only, review intake precedes fix loops, bonus findings go to backlog/input, Superpowers evidence or compensation is required, and A2 is not introduced as a required artifact.
 
 ## Examples
 

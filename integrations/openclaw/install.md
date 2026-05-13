@@ -6,7 +6,7 @@ OpenClaw users can run the same dispatch workflow as a workspace skill. Local ev
 
 Hermes remains the maintained home. OpenClaw support is documented as workspace-skill compatible, not as a marketplace, plugin, or ClawHub package. After installing, verify discovery on your local OpenClaw runtime with `openclaw skills list` and `openclaw skills info basd-coding-dispatch`.
 
-By default, the installer also installs pinned companion skills from `integrations/companion-skills.json` when they are missing. These include Hermes Codex/Claude Code worker guides and Superpowers process skills for planning, review, TDD, debugging, and verification. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
+By default, the installer also installs pinned companion skills from `integrations/companion-skills.json` when they are missing. These include Hermes Codex/Claude Code worker guides and complete pinned upstream directories for all 14 Superpowers process skills: activation, brainstorming, worktrees, planning, execution, parallel dispatch, review request, review intake, TDD, systematic debugging, verification, branch closeout, and skill-writing. Default companion installs fetch from `raw.githubusercontent.com`, so they require network access to GitHub raw content.
 
 ## Install
 
@@ -39,7 +39,7 @@ Runtime discovery depends on the workspace that OpenClaw is actually using. If `
 - `skills/basd-coding-dispatch/references/review-orchestration.md`
 - `skills/basd-coding-dispatch/references/subagent-skill-bundles.md`
 
-Default companion skills install under sibling directories such as `skills/codex/`, `skills/claude-code/`, and `skills/using-superpowers/`. Existing companion skills are skipped unless `--force` is provided.
+Default companion skills install under sibling directories such as `skills/codex/`, `skills/claude-code/`, `skills/using-superpowers/`, `skills/brainstorming/`, and `skills/finishing-a-development-branch/`. Existing companion skills are skipped unless `--force` is provided.
 
 The installer refuses to overwrite existing core `basd-coding-dispatch` skill files without `--force`.
 

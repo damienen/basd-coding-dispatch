@@ -10,6 +10,16 @@ The CLI exits zero for an unknown command. Make unknown commands print help and 
 
 Small fix using the `tiny-fix` quality profile. User-visible CLI behavior. No spec gate needed beyond the stated behavior.
 
+## Micro-Brainstorm
+
+The request is exact, so no full Brainstorming Gate is needed. If ambiguity appeared, use a micro-brainstorm such as:
+
+```text
+Question: should unknown command output go to stdout or stderr?
+Tradeoff: stdout preserves current help behavior; stderr may be more conventional for errors.
+Decision needed before implementation if existing tests do not settle it.
+```
+
 ## Worker Routing
 
 Codex implements. Independent review is lightweight because tiny fixes still get a separate reviewer check.
@@ -25,7 +35,7 @@ Codex implements. Independent review is lightweight because tiny fixes still get
 
 Reviewer checks that known commands still work, unknown commands fail, and help text remains accurate.
 
-Review packet includes `git status --short --branch`, the focused diff, untracked files if any, and the smoke-test output.
+Review packet includes `git status --short --branch`, the focused diff, untracked files if any, and the smoke-test output. Review intake dispositions any finding before a fix loop.
 
 ## Verification
 

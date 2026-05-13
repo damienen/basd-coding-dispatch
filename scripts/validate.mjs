@@ -4,6 +4,12 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  expectedDestinationPathForSuperpowersSource,
+  expectedSuperpowersExecutableSourceFiles,
+  expectedSuperpowersCompanionSkills,
+  expectedSuperpowersCompanionSourceFiles
+} from "./companion-support-files.mjs";
 
 const defaultRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let repoRoot = defaultRepoRoot;
@@ -26,6 +32,7 @@ const requiredFiles = [
   "scripts/validate.mjs",
   "scripts/smoke-test.mjs",
   "scripts/workflow-evals.mjs",
+  "scripts/companion-support-files.mjs",
   companionManifestFile,
   "skills/basd-coding-dispatch/SKILL.md",
   "skills/basd-coding-dispatch/references/README.md",
@@ -154,15 +161,15 @@ const skillReferenceFiles = [
 const expectedCompanionSkills = [
   "codex",
   "claude-code",
-  "using-superpowers",
-  "brainstorming",
-  "writing-plans",
-  "subagent-driven-development",
-  "requesting-code-review",
-  "verification-before-completion",
-  "test-driven-development",
-  "systematic-debugging"
+  ...expectedSuperpowersCompanionSkills
 ];
+const expectedSuperpowersCompanionFileCount = Object.values(
+  expectedSuperpowersCompanionSourceFiles
+).flat().length;
+const expectedSuperpowersExecutableSourceFileSet = new Set(
+  expectedSuperpowersExecutableSourceFiles
+);
+const executableCompanionMode = "755";
 
 const verifiedCompanionRefs = {
   "NousResearch/hermes-agent": "faa13e49f81480771ceeb55991bb0c27edf1a5fb",
@@ -372,7 +379,16 @@ async function validateCompanionManifest() {
     return;
   }
 
+  if (expectedSuperpowersCompanionSkills.length !== 14) {
+    addError("Superpowers companion support map must cover 14 skills");
+  }
+
+  if (expectedSuperpowersCompanionFileCount !== 46) {
+    addError("Superpowers companion support map must cover 46 files");
+  }
+
   const seenNames = new Set();
+  const skillsByName = new Map();
   const defaultSkills = [];
 
   for (const [index, skill] of manifest.skills.entries()) {
@@ -406,6 +422,7 @@ async function validateCompanionManifest() {
         addError(`${label}.name duplicates ${skill.name}`);
       }
       seenNames.add(skill.name);
+      skillsByName.set(skill.name, skill);
 
       if (skill.installByDefault === true) {
         defaultSkills.push(skill.name);
@@ -462,10 +479,32 @@ async function validateCompanionManifest() {
         addError(`${fileLabel}.sourcePath must live under ${skill.sourceDirectory}`);
       }
 
+      if (
+        typeof file.sourcePath === "string" &&
+        typeof file.destinationPath === "string" &&
+        typeof skill.sourceDirectory === "string" &&
+        file.sourcePath.startsWith(`${skill.sourceDirectory}/`)
+      ) {
+        const expectedDestinationPath = file.sourcePath.slice(skill.sourceDirectory.length + 1);
+        if (file.destinationPath !== expectedDestinationPath) {
+          addError(`${fileLabel}.destinationPath must equal ${expectedDestinationPath}`);
+        }
+      }
+
       const expectedRawUrl =
         `https://raw.githubusercontent.com/${skill.sourceRepo}/${skill.ref}/${file.sourcePath}`;
       if (file.rawUrl !== expectedRawUrl) {
         addError(`${fileLabel}.rawUrl must equal ${expectedRawUrl}`);
+      }
+
+      if (file.mode !== undefined) {
+        if (file.mode !== executableCompanionMode) {
+          addError(`${fileLabel}.mode must be ${executableCompanionMode} when present`);
+        }
+
+        if (!expectedSuperpowersExecutableSourceFileSet.has(file.sourcePath)) {
+          addError(`${fileLabel}.mode is only supported for expected executable support files`);
+        }
       }
 
       if (file.destinationPath === "SKILL.md") {
@@ -485,6 +524,48 @@ async function validateCompanionManifest() {
 
     if (!defaultSkills.includes(skillName)) {
       addError(`${companionManifestFile} must install ${skillName} by default`);
+    }
+  }
+
+  for (const [skillName, sourcePaths] of Object.entries(expectedSuperpowersCompanionSourceFiles)) {
+    const skill = skillsByName.get(skillName);
+    if (!skill) {
+      continue;
+    }
+
+    const filesBySourcePath = new Map(
+      (skill.files ?? [])
+        .filter(isPlainObject)
+        .map((file) => [file.sourcePath, file])
+    );
+
+    for (const sourcePath of sourcePaths) {
+      const expectedDestinationPath = expectedDestinationPathForSuperpowersSource(
+        skillName,
+        sourcePath
+      );
+      const file = filesBySourcePath.get(sourcePath);
+
+      if (!file) {
+        addError(`${companionManifestFile} ${skillName} is missing expected upstream file ${sourcePath}`);
+        continue;
+      }
+
+      if (file.destinationPath !== expectedDestinationPath) {
+        addError(
+          `${companionManifestFile} ${skillName} ${sourcePath} must install to ${expectedDestinationPath}`
+        );
+      }
+    }
+  }
+
+  for (const sourcePath of expectedSuperpowersExecutableSourceFiles) {
+    const skillName = sourcePath.split("/")[1];
+    const skill = skillsByName.get(skillName);
+    const file = (skill?.files ?? []).find((candidate) => candidate.sourcePath === sourcePath);
+
+    if (file && file.mode !== executableCompanionMode) {
+      addError(`${companionManifestFile} ${sourcePath} must declare mode ${executableCompanionMode}`);
     }
   }
 }

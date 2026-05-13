@@ -2,7 +2,7 @@
 
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -335,6 +335,20 @@ function companionFixturePath(skill, file) {
   return path.join(fixtureRoot, skill.sourceRepo, file.sourcePath);
 }
 
+function companionFileMode(skill, file) {
+  if (file.mode === undefined) {
+    return undefined;
+  }
+
+  if (file.mode !== "755") {
+    throw new Error(
+      `unsupported companion file mode for ${skill.name} ${file.sourcePath}: ${file.mode}`
+    );
+  }
+
+  return 0o755;
+}
+
 async function fetchCompanionFile(skill, file) {
   if (process.env.BASD_COMPANION_SKILLS_FIXTURE_DIR) {
     return readFile(companionFixturePath(skill, file), "utf8");
@@ -371,7 +385,8 @@ async function prepareCompanionSkillInstall(root, options) {
         sourcePath: file.sourcePath,
         outputFile,
         destinationPath: path.join(root, outputFile),
-        rawUrl: file.rawUrl
+        rawUrl: file.rawUrl,
+        mode: companionFileMode(skill, file)
       };
     });
     const existingFiles = plannedFiles.filter((file) => existsSync(file.destinationPath));
@@ -417,6 +432,9 @@ async function writeCompanionSkillInstall(plan) {
     for (const file of skillPlan.files) {
       await mkdir(path.dirname(file.destinationPath), { recursive: true });
       await writeFile(file.destinationPath, file.content, "utf8");
+      if (file.mode !== undefined) {
+        await chmod(file.destinationPath, file.mode);
+      }
     }
   }
 }

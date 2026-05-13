@@ -12,40 +12,57 @@ The dispatcher owns the gates. Codex, Claude, and other validated tools are work
 ## Core Loop
 
 1. Classify the request.
-   - Identify whether it is a question, small fix, feature, refactor, debugging task, review, release task, or integration task.
-   - Identify risk: user-facing behavior, security, data loss, public docs, dependency changes, or workflow changes.
+   - Identify whether it is a question, tiny fix, feature, refactor, debugging task, review, release task, or integration task.
+   - Identify risk: user-facing behavior, security, data loss, public docs, dependency changes, install paths, workflow changes, or provider claims.
    - Select the quality profile and edge-case pack. Tiny fixes still receive lightweight independent review.
 
-2. Select the worker-routing shape.
+2. Load or declare the Superpowers activation map.
+   - Start with `using-superpowers` when available.
+   - Map the work to the relevant phases: `brainstorming`, `using-git-worktrees`, `writing-plans`, `executing-plans`, `subagent-driven-development`, `dispatching-parallel-agents`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`, `receiving-code-review`, `verification-before-completion`, `finishing-a-development-branch`, and `writing-skills`.
+   - If a required skill/reference is unavailable, state the compensation gates instead of implying it loaded.
+
+3. Select the worker-routing shape.
    - Choose one implementer when the task is narrow.
    - Split implementation and review when the task is risky or broad.
+   - Use `executing-plans` for 1-2 approved tasks, `subagent-driven-development` for 3+ owned task slices, and `dispatching-parallel-agents` only for independent domains.
    - Keep provider mechanics in `references/` and integration docs.
 
-3. Run the spec gate.
-   - Produce a concise spec before code when requirements are ambiguous, user-facing, or broad.
+4. Run the Brainstorming Gate when required.
+   - Use it before implementation planning for broad, ambiguous, user-facing, UI/design, architecture, workflow, public-doc, or public-claim work.
+   - Exact low-risk tiny fixes stay compact; use a micro-brainstorm only when ambiguity exists.
+   - Do not let the implementation plan become the first place requirements are invented.
+
+5. Run the spec gate when required.
+   - Produce a concise spec before code when requirements are ambiguous, user-facing, broad, public, or risky.
    - Wait for approval when the user asked for gates or when the scope is not clear.
 
-4. Run the implementation-plan gate.
-   - Name files, behavior, tests, verification commands, and rollback considerations.
+6. Run the implementation-plan gate.
+   - Name files, behavior, TDD applicability, expected RED failures, execution mode, review packet, review-intake policy, verification commands, rollback, and branch closeout boundaries.
    - Do not write feature code before the plan is approved when plan approval is required.
    - Use `references/plan-linter.md` as a human checklist for feature, risky, public, cross-module, or ambiguous work.
 
-5. Implement.
+7. Isolate and implement.
+   - Use a worktree after implementation-plan approval when feature work needs isolation.
    - Keep changes scoped to the approved plan.
    - Preserve unrelated user changes.
    - Avoid worker lock-in unless the integration requires it.
 
-6. Review independently.
+8. Review independently and run review intake.
    - Use a separate reviewer or subagent when available for meaningful changes.
    - Use lightweight independent review even for tiny fixes.
    - Build the reviewer packet from `references/review-packets.md`.
-   - Reconcile findings before final verification.
+   - Reconcile findings with `receiving-code-review`: read, restate, verify, evaluate, disposition, then fix only accepted in-scope findings.
    - Preserve valid bonus findings as backlog/input instead of discarding them.
 
-7. Verify before completion.
+9. Verify before completion.
    - Run the smallest commands that prove the work, then broader checks when risk justifies them.
    - Include Superpowers evidence, or explicit compensation with external gates when a required skill/reference was unavailable.
    - Report commands, status, skipped checks, and residual risk.
+
+10. Finish the branch explicitly.
+   - Use `finishing-a-development-branch` after verification to present closeout options.
+   - Do not push, PR, merge, publish, release, deploy, delete branches, or discard work unless the human explicitly approves.
+   - Update skills or process memory with `writing-skills` discipline only when useful and in scope.
 
 A2 run manifest / gate ledger is intentionally not part of the v0.1 public skill requirements.
 
@@ -57,10 +74,10 @@ Load only the reference needed for the task:
 - `references/quality-profiles.md` for risk-tiered defaults, review levels, and test escalation.
 - `references/edge-case-packs.md` for short recurring-miss checklists.
 - `references/review-packets.md` for independent-review inputs.
-- `references/superpowers-integration.md` for Superpowers evidence and compensation.
-- `references/prompt-templates.md` for dispatch, review, and final-report prompt shapes.
+- `references/superpowers-integration.md` for Superpowers phase map, evidence, and compensation.
+- `references/prompt-templates.md` for dispatch, review, review-intake, closeout, and final-report prompt shapes.
 - `references/plan-linter.md` for implementation-plan checklisting.
 - `references/provider-command-recipes.md` for Hermes/OpenClaw install and worker command patterns.
-- `references/session-topology.md` for single-worker and split-worker shapes.
-- `references/review-orchestration.md` for independent review.
+- `references/session-topology.md` for single-worker, split-worker, and subagent execution shapes.
+- `references/review-orchestration.md` for independent review and review intake.
 - `references/subagent-skill-bundles.md` for assigning focused subagent work.

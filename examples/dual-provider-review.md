@@ -14,6 +14,8 @@ Release and packaging task. Higher risk because incorrect claims or unsafe publi
 
 Worker A implements the workflow. Worker B reviews the diff and checks whether the workflow is safe, conventional, and honest.
 
+Use `subagent-driven-development` if implementation has 3+ owned task slices. Use `dispatching-parallel-agents` only for independent domains, such as read-only docs claim review while workflow edits continue elsewhere.
+
 ## Implementer Brief
 
 ```text
@@ -41,6 +43,17 @@ findings:
     recommendation: short fix or backlog note
     disposition: must-fix-now | ask-human | bonus-backlog | reject-if-wrong
 ```
+
+## Review Intake
+
+Before any fix loop, use `receiving-code-review`:
+
+1. Read the complete feedback.
+2. Restate unclear findings.
+3. Verify each finding against the workflow, package scripts, and approved scope.
+4. Evaluate whether the finding is technically sound.
+5. Disposition it as `must-fix-now`, `ask-human`, `bonus-backlog`, or `reject-if-wrong`.
+6. Fix only accepted in-scope findings.
 
 ## Dispatcher Reconciliation
 
