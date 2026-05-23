@@ -81,3 +81,4 @@ Load only the reference needed for the task:
 - `references/session-topology.md` for single-worker, split-worker, and subagent execution shapes.
 - `references/review-orchestration.md` for independent review and review intake.
 - `references/subagent-skill-bundles.md` for assigning focused subagent work.
+- `references/progressive-disclosure.md` when adapting the skill to private installs or keeping a large internal skill lean.

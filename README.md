@@ -130,6 +130,7 @@ Hermes is the flagship install path for v0.1. OpenClaw support is based on the v
 - Verify with concrete commands, transcripts, examples, or screenshots before reporting done.
 - Present explicit branch closeout options and respect no-push/no-publish/no-PR branch policy unless approval is granted.
 - Keep public repo files free of private paths, credentials, private client data, and unvalidated provider metadata.
+- Keep `SKILL.md` lean. Put private/project-specific lessons, long templates, and one-off operational history into references or project-local docs; see `references/progressive-disclosure.md`.
 - A2 run manifest / gate ledger is intentionally not introduced as a v0.1 requirement.
 
 See `skills/basd-coding-dispatch/references/quality-gates.md` for the installed skill reference and `references/quality-gates.md` for repo browsing. Use `references/quality-profiles.md`, `references/edge-case-packs.md`, `references/review-packets.md`, `references/superpowers-integration.md`, `references/plan-linter.md`, and `references/prompt-templates.md` for the detailed quality workflow.

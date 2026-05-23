@@ -16,5 +16,6 @@ Suggested loading order:
 10. Load `references/review-orchestration.md` when meaningful implementation work needs independent review or review intake.
 11. Load `references/edge-case-packs.md` for short recurring-miss checklists.
 12. Load `references/provider-command-recipes.md` for Hermes/OpenClaw installs and worker command shapes.
+13. Load `references/progressive-disclosure.md` when adapting the skill to private installs, public packages, or large internal skill libraries.
 
 Tiny fixes still receive lightweight independent review. A2 run manifest / gate ledger is intentionally not part of v0.1 public requirements.
