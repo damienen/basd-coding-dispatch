@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added progressive-disclosure guidance for keeping `SKILL.md` lean while moving private/project-specific detail into references or project-local docs.
+- Included `references/progressive-disclosure.md` in both repo-level and skill-local reference trees.
+
 ## 0.1.0
 
 - Initial public repo skeleton.
